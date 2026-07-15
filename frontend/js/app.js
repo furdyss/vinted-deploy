@@ -43,9 +43,9 @@ function renderStats(s) {
     const grid = document.getElementById('stats-grid');
     grid.innerHTML = `
         <div class="stat-card"><div class="label">Przedmioty</div><div class="value accent">${s.total_items.toLocaleString()}</div></div>
-        <div class="stat-card"><div class="label">Śr. cena</div><div class="value green">${s.avg_price} €</div></div>
-        <div class="stat-card"><div class="label">Min cena</div><div class="value yellow">${s.min_price} €</div></div>
-        <div class="stat-card"><div class="label">Max cena</div><div class="value">${s.max_price} €</div></div>
+        <div class="stat-card"><div class="label">Śr. cena</div><div class="value green">${s.avg_price} zł</div></div>
+        <div class="stat-card"><div class="label">Min cena</div><div class="value yellow">${s.min_price} zł</div></div>
+        <div class="stat-card"><div class="label">Max cena</div><div class="value">${s.max_price} zł</div></div>
         <div class="stat-card"><div class="label">Aktywne zapytania</div><div class="value accent">${s.active_queries}</div></div>
         <div class="stat-card"><div class="label">Wszystkie zapytania</div><div class="value">${s.total_queries}</div></div>
     `;
@@ -89,7 +89,7 @@ function renderTrendChart(trends) {
         ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(w - padding.right, y); ctx.stroke();
         ctx.fillStyle = '#606078'; ctx.font = '11px sans-serif'; ctx.textAlign = 'right';
         const val = maxPrice - (maxPrice - minPrice) * (i / 4);
-        ctx.fillText(val.toFixed(0) + '€', padding.left - 8, y + 4);
+        ctx.fillText(val.toFixed(0) + 'zł', padding.left - 8, y + 4);
     }
 
     // Bars (count)
@@ -145,7 +145,7 @@ function renderBrandBars(brands) {
             <div class="bar"><div class="bar-fill" style="width:${(b.count / maxCount * 100).toFixed(1)}%">
                 <span class="count">${b.count}</span>
             </div></div>
-            <span style="min-width:50px;text-align:right;color:var(--accent);font-weight:600;font-size:13px">${b.avg_price}€</span>
+            <span style="min-width:50px;text-align:right;color:var(--accent);font-weight:600;font-size:13px">${b.avg_price}zł</span>
         </div>
     `).join('');
 }
@@ -174,7 +174,7 @@ async function loadItems(reset = true) {
                 <div class="info">
                     <div class="title">${item.title || 'Bez tytułu'}</div>
                     <div class="meta">
-                        <span class="price">${item.price} ${item.currency || '€'}</span>
+                        <span class="price">${item.price} ${item.currency || 'zł'}</span>
                     </div>
                     <div class="details">
                         ${item.brand ? `<span class="tag brand">${item.brand}</span>` : ''}
@@ -290,9 +290,9 @@ async function loadAnalysis() {
             <tr>
                 <td><strong>${b.brand}</strong></td>
                 <td>${b.count}</td>
-                <td style="color:var(--accent);font-weight:600">${b.avg_price} €</td>
-                <td style="color:var(--success)">${b.min_price} €</td>
-                <td style="color:var(--warning)">${b.max_price} €</td>
+                <td style="color:var(--accent);font-weight:600">${b.avg_price} zł</td>
+                <td style="color:var(--success)">${b.min_price} zł</td>
+                <td style="color:var(--warning)">${b.max_price} zł</td>
             </tr>
         `).join('');
     } catch (e) { console.error('Analysis load error:', e); }

@@ -22,7 +22,7 @@ class Item(Base):
     title = Column(String)
     description = Column(Text, nullable=True)
     price = Column(Float)
-    currency = Column(String, default="EUR")
+    currency = Column(String, default="PLN")
     brand = Column(String, nullable=True)
     size = Column(String, nullable=True)
     color = Column(String, nullable=True)

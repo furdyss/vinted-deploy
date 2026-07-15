@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, and_
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from database import init_db, get_db, Item, SearchQuery, PriceHistory
+from backend.database import init_db, get_db, Item, SearchQuery, PriceHistory
 
 scheduler = AsyncIOScheduler()
 
