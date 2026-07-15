@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f0f13">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" href="/static/icons/icon-192.png">
+    <title>Vinted Market Panel</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- Hamburger -->
+    <button class="hamburger" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+    </button>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>📊 Vinted Panel</h1>
+            <p>Market Analysis Dashboard</p>
+        </div>
+        <nav class="nav">
+            <div class="nav-item active" onclick="showPage('dashboard')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Dashboard
+            </div>
+            <div class="nav-item" onclick="showPage('items')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                Przedmioty
+            </div>
+            <div class="nav-item" onclick="showPage('queries')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                Wyszukiwania
+            </div>
+            <div class="nav-item" onclick="showPage('analysis')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                Analiza
+            </div>
+        </nav>
+        <div style="padding: 16px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted);">
+            v1.0 · Vinted Market Panel
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+
+        <!-- Dashboard -->
+        <div class="page active" id="page-dashboard">
+            <div class="page-header"><h2>Dashboard</h2></div>
+            <div class="stats-grid" id="stats-grid"></div>
+            <div class="chart-container">
+                <h3>Trend cenowy (30 dni)</h3>
+                <canvas class="chart-canvas" id="trend-chart"></canvas>
+            </div>
+            <h3 style="margin-bottom:16px; color:var(--text-secondary)">Top Marki</h3>
+            <div id="brand-bars" class="brand-bars"></div>
+        </div>
+
+        <!-- Items -->
+        <div class="page" id="page-items">
+            <div class="page-header"><h2>Przedmioty</h2></div>
+            <div class="search-bar">
+                <input class="search-input" id="item-search" placeholder="Szukaj przedmiotów..." oninput="debounceSearch()">
+                <select class="search-input" style="max-width:180px" id="item-sort" onchange="loadItems()">
+                    <option value="newest">Najnowsze</option>
+                    <option value="price_asc">Cena ↑</option>
+                    <option value="price_desc">Cena ↓</option>
+                </select>
+            </div>
+            <div class="items-grid" id="items-grid"></div>
+            <div style="text-align:center; margin-top:24px;">
+                <button class="btn btn-secondary" id="load-more-btn" onclick="loadMore()" style="display:none">Pokaż więcej</button>
+            </div>
+        </div>
+
+        <!-- Queries -->
+        <div class="page" id="page-queries">
+            <div class="page-header">
+                <h2>Wyszukiwania</h2>
+                <button class="btn btn-primary" onclick="showAddQueryModal()">+ Nowe wyszukiwanie</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nazwa</th>
+                            <th>URL</th>
+                            <th>Status</th>
+                            <th>Interwał</th>
+                            <th>Ostatnie uruchomienie</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody id="queries-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Analysis -->
+        <div class="page" id="page-analysis">
+            <div class="page-header"><h2>Analiza Marek</h2></div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Marka</th>
+                            <th>Ilość</th>
+                            <th>Śr. cena</th>
+                            <th>Min</th>
+                            <th>Max</th>
+                        </tr>
+                    </thead>
+                    <tbody id="brand-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Add Query Modal -->
+    <div class="modal-overlay" id="add-query-modal">
+        <div class="modal">
+            <h3>Dodaj wyszukiwanie</h3>
+            <div class="form-group">
+                <label>Nazwa</label>
+                <input id="q-name" placeholder="np. Nike Air Force">
+            </div>
+            <div class="form-group">
+                <label>URL wyszukiwania Vinted</label>
+                <input id="q-url" placeholder="https://www.vinted.fr/catalog?search_text=nike+air+force">
+            </div>
+            <div class="form-group">
+                <label>Interwał (minuty)</label>
+                <input id="q-interval" type="number" value="30" min="5">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
+                <button class="btn btn-primary" onclick="addQuery()">Dodaj</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

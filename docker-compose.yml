@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  vinted-panel:
+    build: .
+    container_name: vinted-panel
+    ports:
+      - "8080:8080"
+    volumes:
+      - vinted-data:/app/data
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/vinted.db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/stats"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  vinted-data:
