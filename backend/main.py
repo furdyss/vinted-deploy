@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import FastAPI, Depends, Query, HTTPException
+from fastapi import FastAPI, Depends, Query, HTTPException, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -455,7 +455,7 @@ async def set_cookie(data: dict, db: AsyncSession = Depends(get_db)):
 # ==================== BOT API ====================
 
 @app.post("/api/bot/import")
-async def bot_import(items: list, db: AsyncSession = Depends(get_db)):
+async def bot_import(items: list = Body(...), db: AsyncSession = Depends(get_db)):
     """Bot sends scraped items here"""
     nc = 0
     for item in items:

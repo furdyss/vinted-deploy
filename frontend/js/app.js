@@ -219,7 +219,7 @@ async function loadQueries() {
                         <button class="btn btn-primary btn-sm" onclick="fetchNow(${q.id})">⚡ Fetch</button>
                         <button class="btn btn-secondary btn-sm" onclick="toggleQuery(${q.id})">🔄</button>
                         <button class="btn btn-danger btn-sm" onclick="deleteQuery(${q.id})">✕</button>
-<span style="font-size:16px;cursor:pointer;margin-left:8px" onclick="toggleNotifyEmpty(${q.id})" title="Powiadom gdy pusto">${q.notify_empty ? "🔔" : "🔕"}</span>
+<span style="font-size:16px;cursor:pointer;margin-left:8px" onclick="toggleNotifyEmpty(${q.id})" title="Powiadom gdy pusto" style="cursor:pointer;padding:4px 8px;border-radius:6px;background:${q.notify_empty ? "rgba(124,92,255,0.2)" : "rgba(255,255,255,0.05)"};font-size:16px">${q.notify_empty ? "🔔 Wł." : "🔕 Wył."}</span>
                     </div>
                 </td>
             </tr>

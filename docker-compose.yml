@@ -12,7 +12,7 @@ services:
     environment:
       - DATABASE_URL=sqlite+aiosqlite:///./data/vinted.db
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/stats"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/stats')"]
       interval: 30s
       timeout: 5s
       retries: 3
