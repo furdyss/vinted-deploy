@@ -61,6 +61,18 @@ class PriceHistory(Base):
     recorded_at = Column(DateTime, default=datetime.utcnow)
 
 
+
+
+class WatchedSeller(Base):
+    __tablename__ = "watched_sellers"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String, unique=True, index=True)
+    profile_url = Column(String, nullable=True)
+    last_item_count = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

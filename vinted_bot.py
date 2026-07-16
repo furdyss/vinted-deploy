@@ -93,6 +93,48 @@ async def get_brand_averages():
     except:
         return {}
 
+
+async def get_watched_sellers():
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{PANEL_URL}/api/bot/sellers", timeout=10)
+            return resp.json().get("sellers", [])
+    except:
+        return []
+
+async def check_seller(seller):
+    try:
+        username = seller["username"]
+        last_count = seller.get("last_item_count", 0)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15",
+            "Accept": "application/json",
+            "Accept-Language": "pl-PL,pl;q=0.9",
+        }
+        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+            resp = await client.get(f"https://www.vinted.pl/api/v2/users/{username}/items", headers=headers)
+            if resp.status_code != 200:
+                return
+            items = resp.json().get("items", [])
+            current_count = len(items)
+            
+            if last_count > 0 and current_count > last_count:
+                new_items = current_count - last_count
+                msg = f"👤 <b>{username}</b> dodał {new_items} nowych ogłoszeń!\n\n"
+                for item in items[:5]:
+                    price_obj = item.get("price", {})
+                    price = price_obj.get("amount", 0) if isinstance(price_obj, dict) else 0
+                    msg += f"💰 <b>{price} zł</b> | {item.get('title', '')[:40]}\n"
+                    msg += f"🔗 https://www.vinted.pl/items/{item.get('id', '')}\n\n"
+                await send_telegram(msg)
+            
+            # Update count
+            async with httpx.AsyncClient() as client:
+                await client.post(f"{PANEL_URL}/api/bot/sellers/update", 
+                    json={"seller_id": seller["id"], "item_count": current_count})
+    except Exception as e:
+        print(f"Seller check error: {e}")
+
 async def scraper_loop():
     global USER_CHAT_ID
     while True:
@@ -102,7 +144,13 @@ async def scraper_loop():
                 continue
             queries = await get_queries()
             if not queries:
-                await asyncio.sleep(CHECK_INTERVAL)
+                            # Check watched sellers
+            sellers = await get_watched_sellers()
+            for seller in sellers:
+                await check_seller(seller)
+                await asyncio.sleep(3)
+
+            await asyncio.sleep(CHECK_INTERVAL)
                 continue
             for q in queries:
                 try:

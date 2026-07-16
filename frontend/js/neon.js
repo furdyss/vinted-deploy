@@ -14,6 +14,7 @@ function showPage(name, el) {
     if (name === 'items') { currentPage = 1; loadItems(); }
     if (name === 'queries') loadQueries();
     if (name === 'analysis') loadAnalysis();
+    if (name === 'sellers') loadSellers();
 }
 
 function toggleSidebar() {
@@ -420,4 +421,57 @@ async function showPriceHistory(vintedId, title) {
     } catch (e) {
         document.getElementById('price-history-info').innerHTML = 'Błąd ładowania historii.';
     }
+}
+
+
+// --- Sellers ---
+async function loadSellers() {
+    try {
+        var res = await fetch(API + '/api/sellers');
+        var data = await res.json();
+        var el = document.getElementById('sellers-list');
+        if (!data.sellers.length) {
+            el.innerHTML = '<div class="empty">Brak śledzonych sprzedawców. Dodaj pierwszego!</div>';
+            return;
+        }
+        el.innerHTML = data.sellers.map(function(s) {
+            return '<div class="card" style="display:flex;justify-content:space-between;align-items:center">' +
+                '<div><div style="font-weight:600">' + s.username + '</div>' +
+                '<div style="font-size:12px;color:var(--t3);margin-top:4px">Ostatnio: ' + s.last_item_count + ' ogłoszeń</div></div>' +
+                '<div style="display:flex;gap:8px;align-items:center">' +
+                '<span class="toggle ' + (s.is_active ? 'on' : 'off') + '" onclick="toggleSeller(' + s.id + ')">' + (s.is_active ? '🟢' : '⚫') + '</span>' +
+                '<span class="btn-icon" onclick="deleteSeller(' + s.id + ')" style="color:var(--err)">🗑️</span>' +
+                '</div></div>';
+        }).join('');
+    } catch (e) {
+        console.error('Sellers error:', e);
+    }
+}
+
+async function addSeller() {
+    var username = document.getElementById('seller-username').value.trim();
+    if (!username) { showToast('Wpisz nazwę sprzedawcy', 'error'); return; }
+    try {
+        var res = await fetch(API + '/api/sellers?username=' + encodeURIComponent(username), { method: 'POST' });
+        if (res.ok) {
+            showToast('Dodano sprzedawcę!');
+            document.getElementById('seller-username').value = '';
+            loadSellers();
+        } else {
+            var err = await res.json();
+            showToast(err.detail || 'Błąd', 'error');
+        }
+    } catch (e) { showToast('Błąd połączenia', 'error'); }
+}
+
+async function toggleSeller(id) {
+    await fetch(API + '/api/sellers/' + id + '/toggle', { method: 'POST' });
+    loadSellers();
+}
+
+async function deleteSeller(id) {
+    if (!confirm('Usunąć sprzedawcę?')) return;
+    await fetch(API + '/api/sellers/' + id, { method: 'DELETE' });
+    showToast('Usunięto');
+    loadSellers();
 }

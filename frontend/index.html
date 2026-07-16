@@ -35,6 +35,9 @@
 <div class="nav-item" onclick="showPage('bot',this)">
 <span class="icon">🤖</span> Bot
 </div>
+<div class="nav-item" onclick="showPage('sellers',this)">
+<span class="icon">👤</span> Sprzedawcy
+</div>
 <div class="nav-item" onclick="showPage('account',this)">
 <span class="icon">👤</span> Konto
 </div>
@@ -118,6 +121,18 @@
 4. Bot scrapuje co 2 minuty
 </div>
 </div>
+</div>
+
+
+<div class="page" id="page-sellers">
+<h2 class="page-title">👤 Śledzeni sprzedawcy</h2>
+<div class="page-title-row" style="margin-bottom:16px">
+<div style="display:flex;gap:8px;flex:1">
+<input class="search-input" id="seller-username" placeholder="Nazwa sprzedawcy z Vinted" style="flex:1">
+<button class="btn btn-neon" onclick="addSeller()">+ Dodaj</button>
+</div>
+</div>
+<div id="sellers-list"></div>
 </div>
 
 <div class="page" id="page-account">

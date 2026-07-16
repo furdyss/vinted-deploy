@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, and_
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from backend.database import init_db, get_db, Item, SearchQuery, PriceHistory
+from backend.database import init_db, get_db, Item, SearchQuery, PriceHistory, WatchedSeller
 
 scheduler = AsyncIOScheduler()
 
@@ -469,6 +469,87 @@ async def get_brand_averages(db: AsyncSession = Depends(get_db)):
     )
     rows = result.all()
     return {r[0]: {"avg": round(r[1], 2), "count": r[2]} for r in rows}
+
+
+# ==================== WATCHED SELLERS ====================
+
+@app.get("/api/sellers")
+async def get_sellers(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(WatchedSeller).order_by(WatchedSeller.created_at.desc())
+    )
+    sellers = result.scalars().all()
+    return {
+        "sellers": [
+            {
+                "id": s.id,
+                "username": s.username,
+                "profile_url": s.profile_url,
+                "last_item_count": s.last_item_count,
+                "is_active": s.is_active,
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+            }
+            for s in sellers
+        ]
+    }
+
+@app.post("/api/sellers")
+async def add_seller(
+    username: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    existing = await db.execute(
+        select(WatchedSeller).where(WatchedSeller.username == username)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Sprzedawca już jest na liście")
+    s = WatchedSeller(
+        username=username,
+        profile_url=f"https://www.vinted.pl/member/{username}",
+        last_item_count=0,
+    )
+    db.add(s)
+    await db.commit()
+    return {"status": "ok", "id": s.id}
+
+@app.delete("/api/sellers/{seller_id}")
+async def delete_seller(seller_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(WatchedSeller).where(WatchedSeller.id == seller_id))
+    s = result.scalar_one_or_none()
+    if not s:
+        raise HTTPException(status_code=404)
+    await db.delete(s)
+    await db.commit()
+    return {"status": "deleted"}
+
+@app.post("/api/sellers/{seller_id}/toggle")
+async def toggle_seller(seller_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(WatchedSeller).where(WatchedSeller.id == seller_id))
+    s = result.scalar_one_or_none()
+    if not s:
+        raise HTTPException(status_code=404)
+    s.is_active = not s.is_active
+    await db.commit()
+    return {"status": "toggled", "is_active": s.is_active}
+
+@app.get("/api/bot/sellers")
+async def bot_get_sellers(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(WatchedSeller).where(WatchedSeller.is_active == True)
+    )
+    sellers = result.scalars().all()
+    return {"sellers": [{"id": s.id, "username": s.username, "last_item_count": s.last_item_count} for s in sellers]}
+
+@app.post("/api/bot/sellers/update")
+async def bot_update_seller(data: dict, db: AsyncSession = Depends(get_db)):
+    seller_id = data.get("seller_id")
+    item_count = data.get("item_count", 0)
+    result = await db.execute(select(WatchedSeller).where(WatchedSeller.id == seller_id))
+    s = result.scalar_one_or_none()
+    if s:
+        s.last_item_count = item_count
+        await db.commit()
+    return {"status": "ok"}
 
 # ==================== BOT API ====================
 
