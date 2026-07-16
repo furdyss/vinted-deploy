@@ -119,6 +119,7 @@ async def get_items(
                 "image_url": i.image_url,
                 "seller": i.seller_username,
                 "country": i.country,
+                "competitor_price": i.competitor_price,
                 "created_at": i.created_at.isoformat() if i.created_at else None,
             }
             for i in items
@@ -550,6 +551,21 @@ async def bot_update_seller(data: dict, db: AsyncSession = Depends(get_db)):
         s.last_item_count = item_count
         await db.commit()
     return {"status": "ok"}
+
+
+@app.post("/api/items/{item_id}/compare")
+async def set_competitor_price(
+    item_id: int,
+    competitor_price: float = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Item).where(Item.id == item_id))
+    item = result.scalar_one_or_none()
+    if not item:
+        raise HTTPException(status_code=404)
+    item.competitor_price = competitor_price
+    await db.commit()
+    return {"status": "ok", "competitor_price": competitor_price}
 
 # ==================== BOT API ====================
 

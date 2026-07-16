@@ -34,6 +34,7 @@ class Item(Base):
     seller_id = Column(String, nullable=True)
     country = Column(String, nullable=True)
     search_query = Column(String, index=True)
+    competitor_price = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     fetched_at = Column(DateTime, default=datetime.utcnow)
 

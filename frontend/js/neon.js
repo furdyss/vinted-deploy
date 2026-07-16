@@ -160,7 +160,14 @@ async function loadItems() {
             var html = '<div class="item-card" onclick="showPriceHistory(\'' + item.vinted_id + '\', \'' + (item.title || '').replace(/'/g, '') + '\')">' + img +
                 '<div class="item-top"><span class="item-title">' + (item.title || '') + '</span><span class="item-price">' + item.price + ' zł</span></div>' +
                 '<div class="item-meta">' + tags + '</div>' +
-                (item.url ? '<a class="item-link" href="' + item.url + '" target="_blank">🔗 Zobacz na Vinted →</a>' : '') +
+                var searchQ = encodeURIComponent((item.brand || '') + ' ' + (item.title || ''));
+            var compareHtml = '<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">';
+            compareHtml += '<a class="item-link" href="https://www.vinted.pl/search?search_text=' + searchQ + '" target="_blank" style="font-size:11px">🔍 Vinted</a>';
+            compareHtml += '<a class="item-link" href="https://allegro.pl/listing?string=' + searchQ + '" target="_blank" style="font-size:11px;color:#f59e0b">🛒 Allegro</a>';
+            compareHtml += '<a class="item-link" href="https://www.olx.pl/oferty/q-' + searchQ.replace(/%20/g, '-') + '" target="_blank" style="font-size:11px;color:#a855f7">📦 OLX</a>';
+            if (item.competitor_price) { compareHtml += '<span style="font-size:11px;color:#06b6d4;font-weight:600">vs ' + item.competitor_price + ' zł</span>'; }
+            compareHtml += '</div>';
+            (item.url ? '<a class="item-link" href="' + item.url + '" target="_blank">🔗 Zobacz na Vinted →</a>' : '') + compareHtml +
                 '</div>';
             grid.innerHTML += html;
         });
