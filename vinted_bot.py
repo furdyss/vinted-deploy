@@ -142,38 +142,30 @@ async def scraper_loop():
             if not USER_CHAT_ID:
                 await asyncio.sleep(5)
                 continue
-            queries = await get_queries()
-            if not queries:
-                            # Check watched sellers
-            sellers = await get_watched_sellers()
-            for seller in sellers:
-                await check_seller(seller)
-                await asyncio.sleep(3)
 
-            await asyncio.sleep(CHECK_INTERVAL)
-                continue
-            for q in queries:
-                try:
-                    items, error = await scrape_vinted(q["url"])
-                    if error or not items:
-                        if q.get("notify_empty") and not error:
-                            await send_telegram(f"🔍 <b>{q['name']}</b>\n📭 Nic nowego")
-                        continue
-                    result = await send_to_panel(items)
-                    imported = result.get("imported", 0)
-                    if imported > 0:
-                        # Get brand averages for deal detection
-                            averages = await get_brand_averages()
-                            
+            # Process search queries
+            queries = await get_queries()
+            if queries:
+                averages = await get_brand_averages()
+                for q in queries:
+                    try:
+                        items, error = await scrape_vinted(q["url"])
+                        if error or not items:
+                            if q.get("notify_empty") and not error:
+                                await send_telegram(f"🔍 <b>{q['name']}</b>\n📭 Nic nowego")
+                            continue
+                        result = await send_to_panel(items)
+                        imported = result.get("imported", 0)
+                        if imported > 0:
                             for i in items[:imported]:
                                 price = i.get('price', 0)
                                 target = q.get('target_price')
                                 brand = i.get('brand')
                                 avg = averages.get(brand, {}).get('avg') if brand else None
-                                
+
                                 is_target_deal = target and price > 0 and price <= target
                                 is_brand_deal = avg and price > 0 and price <= avg * 0.6
-                                
+
                                 if is_target_deal:
                                     savings = round(target - price, 2)
                                     msg = f"🔥 <b>OKAZJA CENOWA!</b> {q['name']}\n"
@@ -198,10 +190,18 @@ async def scraper_loop():
                                     msg += f"🔗 {i.get('url','')}"
                                 await send_telegram(msg)
                                 await asyncio.sleep(1)
-                    await asyncio.sleep(2)
-                except Exception as e:
-                    print(f"Error: {e}")
+                        await asyncio.sleep(2)
+                    except Exception as e:
+                        print(f"Error scraping {q['name']}: {e}")
+
+            # Check watched sellers
+            sellers = await get_watched_sellers()
+            for seller in sellers:
+                await check_seller(seller)
+                await asyncio.sleep(3)
+
             await asyncio.sleep(CHECK_INTERVAL)
+
         except Exception as e:
             print(f"Loop error: {e}")
             await asyncio.sleep(30)
