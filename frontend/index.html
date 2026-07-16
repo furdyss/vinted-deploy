@@ -105,10 +105,21 @@
 <div class="page-header"><h2>👤 Konto Vinted</h2></div>
 <div class="stat-card" style="margin-bottom:20px">
 <div class="label">Status konta</div>
-<div class="value" id="account-status" style="font-size:18px;margin-top:8px">Sprawdzam...</div>
+<div id="account-status" style="margin-top:12px;font-size:16px;font-weight:600">Sprawdzam...</div>
 </div>
 <div class="stat-card" style="margin-bottom:20px">
-<div class="label">Co zyskujesz</div>
+<h3 style="font-size:16px;margin-bottom:16px">🔐 Zaloguj się do Vinted</h3>
+<p style="font-size:13px;color:var(--t2);margin-bottom:16px">Dane logowania są bezpieczne. Używane tylko do sesji Vinted.</p>
+<div class="form-group"><label>Email</label><input id="login-email" type="email" placeholder="twoj@email.com"></div>
+<div class="form-group"><label>Hasło</label><input id="login-password" type="password" placeholder="••••••••"></div>
+<div id="login-error" style="color:var(--err);font-size:13px;margin-bottom:12px"></div>
+<div style="display:flex;gap:10px">
+<button class="btn btn-primary" onclick="vintedLogin()">Zaloguj się</button>
+<button class="btn btn-danger btn-sm" onclick="vintedLogout()">Wyloguj</button>
+</div>
+</div>
+<div class="stat-card">
+<div class="label">Co zyskujesz po zalogowaniu</div>
 <div style="margin-top:12px;font-size:13px;color:var(--t2);line-height:2">
 ✅ Polubienia przedmiotów z panelu<br>
 ✅ Wysyłanie ofert do sprzedawców<br>
