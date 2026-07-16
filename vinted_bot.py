@@ -106,12 +106,24 @@ async def scraper_loop():
                     imported = result.get("imported", 0)
                     if imported > 0:
                         for i in items[:imported]:
-                            msg = f"🔍 <b>{q['name']}</b>\n"
-                            msg += f"💰 <b>{i['price']} zł</b>\n"
-                            msg += f"📦 {i.get('title','')}\n"
-                            if i.get('brand'): msg += f"🏷️ {i['brand']}\n"
-                            if i.get('size'): msg += f"📏 {i['size']}\n"
-                            msg += f"🔗 {i.get('url','')}"
+                            price = i.get('price', 0)
+                            target = q.get('target_price')
+                            is_deal = target and price > 0 and price <= target
+                            
+                            if is_deal:
+                                msg = f"🔥 <b>OKAZJA!</b> {q['name']}\n"
+                                msg += f"💰 <b>{price} zł</b> (docelowa: {target} zł)\n"
+                                msg += f"📦 {i.get('title','')}\n"
+                                if i.get('brand'): msg += f"🏷️ {i['brand']}\n"
+                                if i.get('size'): msg += f"📏 {i['size']}\n"
+                                msg += f"🔗 {i.get('url','')}"
+                            else:
+                                msg = f"🔍 <b>{q['name']}</b>\n"
+                                msg += f"💰 <b>{price} zł</b>\n"
+                                msg += f"📦 {i.get('title','')}\n"
+                                if i.get('brand'): msg += f"🏷️ {i['brand']}\n"
+                                if i.get('size'): msg += f"📏 {i['size']}\n"
+                                msg += f"🔗 {i.get('url','')}"
                             await send_telegram(msg)
                             await asyncio.sleep(1)
                     await asyncio.sleep(2)

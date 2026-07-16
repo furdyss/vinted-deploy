@@ -215,6 +215,7 @@ async def get_queries(db: AsyncSession = Depends(get_db)):
                 "url": q.url,
                 "is_active": q.is_active,
                 "interval_minutes": q.interval_minutes, "notify_empty": q.notify_empty,
+                "target_price": q.target_price,
                 "last_run": q.last_run.isoformat() if q.last_run else None,
                 "created_at": q.created_at.isoformat() if q.created_at else None,
             }
@@ -228,6 +229,7 @@ async def add_query(
     name: str = Query(...),
     url: str = Query(...),
     interval: int = Query(default=30),
+    target_price: float = Query(default=None),
     db: AsyncSession = Depends(get_db),
 ):
     existing = await db.execute(
@@ -236,7 +238,7 @@ async def add_query(
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Query already exists")
 
-    q = SearchQuery(name=name, url=url, interval_minutes=interval, notify_empty=False)
+    q = SearchQuery(name=name, url=url, interval_minutes=interval, notify_empty=False, target_price=target_price)
     db.add(q)
     await db.commit()
     return {"status": "ok", "id": q.id}
@@ -493,7 +495,7 @@ async def bot_get_queries(db: AsyncSession = Depends(get_db)):
         select(SearchQuery).where(SearchQuery.is_active == True)
     )
     queries = result.scalars().all()
-    return {"queries": [{"id": q.id, "name": q.name, "url": q.url} for q in queries]}
+    return {"queries": [{"id": q.id, "name": q.name, "url": q.url, "target_price": q.target_price} for q in queries]}
 
 @app.get("/api/bot/status")
 async def bot_status():

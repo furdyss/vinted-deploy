@@ -47,6 +47,7 @@ class SearchQuery(Base):
     is_active = Column(Boolean, default=True)
     interval_minutes = Column(Integer, default=30)
     notify_empty = Column(Boolean, default=False)
+    target_price = Column(Float, nullable=True)
     last_run = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

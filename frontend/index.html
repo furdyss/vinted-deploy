@@ -83,7 +83,7 @@
 </div>
 <div class="table-wrap">
 <table>
-<thead><tr><th>Nazwa</th><th>URL</th><th>Status</th><th>Co ile</th><th>Powiadom</th><th></th></tr></thead>
+<thead><tr><th>Nazwa</th><th>Status</th><th>Co ile</th><th>Cena doc.</th><th>Powiadom</th><th></th></tr></thead>
 <tbody id="queries-table"></tbody>
 </table>
 </div>
@@ -159,6 +159,7 @@
 </div>
 <div class="form-group"><label>Nazwa</label><input id="q-name" placeholder="np. Nike Air Max"></div>
 <div class="form-group"><label>URL z Vinted</label><input id="q-url" placeholder="https://www.vinted.pl/catalog?search_text=nike+air+max"></div>
+<div class="form-group"><label>Cena docelowa (zł, opcjonalnie)</label><input id="q-target-price" type="number" placeholder="np. 50 (powiadomi gdy poniżej)"></div>
 <div class="form-group"><label>Co ile minut</label>
 <select id="q-interval" class="search-input select">
 <option value="5">Co 5 min</option>

@@ -199,7 +199,7 @@ async function loadQueries() {
                 '<td><strong>' + q.name + '</strong></td>' +
                 '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--t3)" title="' + q.url + '">' + urlShort + '</td>' +
                 '<td><span class="btn-icon" onclick="toggleQuery(' + q.id + ')" style="color:' + (q.is_active ? 'var(--ok)' : 'var(--t3)') + '">' + (q.is_active ? '🟢' : '⚫') + '</span></td>' +
-                '<td style="font-size:12px;color:var(--t2)">' + q.interval_minutes + ' min</td>' +
+                '<td style="font-size:12px;color:var(--t2)">' + q.interval_minutes + ' min</td>' + '<td style="font-size:12px;color:' + (q.target_price ? 'var(--warn)' : 'var(--t3)') + ';font-weight:600">' + (q.target_price ? q.target_price + ' zł' : '—') + '</td>' +
                 '<td><span class="toggle ' + (q.notify_empty ? 'on' : 'off') + '" onclick="toggleNotifyEmpty(' + q.id + ')">' + (q.notify_empty ? '🔔 Wł.' : '🔕 Wył.') + '</span></td>' +
                 '<td><span class="btn-icon" onclick="deleteQuery(' + q.id + ')" style="color:var(--err)">🗑️</span></td>' +
                 '</tr>';
@@ -221,9 +221,10 @@ async function addQuery() {
     var name = document.getElementById('q-name').value.trim();
     var url = document.getElementById('q-url').value.trim();
     var interval = document.getElementById('q-interval').value;
+    var targetPrice = document.getElementById('q-target-price').value;
     if (!name || !url) { showToast('Wypełnij wszystkie pola', 'error'); return; }
     try {
-        var res = await fetch(API + '/api/queries?name=' + encodeURIComponent(name) + '&url=' + encodeURIComponent(url) + '&interval=' + interval, { method: 'POST' });
+        var res = await fetch(API + '/api/queries?name=' + encodeURIComponent(name) + '&url=' + encodeURIComponent(url) + '&interval=' + interval + (targetPrice ? '&target_price=' + targetPrice : ''), { method: 'POST' });
         if (res.ok) {
             showToast('Dodano wyszukiwanie!');
             closeModal();
