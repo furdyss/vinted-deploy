@@ -191,5 +191,17 @@
 <div class="toast" id="toast"></div>
 
 <script src="/static/js/neon.js"></script>
+
+<!-- Price History Modal -->
+<div class="modal" id="price-modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3 id="price-modal-title">Historia cen</h3>
+<button class="modal-close" onclick="closePriceModal()">✕</button>
+</div>
+<canvas id="price-history-chart" width="350" height="200" style="width:100%;margin-bottom:16px"></canvas>
+<div id="price-history-info" style="font-size:13px;color:var(--t2)"></div>
+</div>
+</div>
 </body>
 </html>

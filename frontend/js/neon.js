@@ -155,8 +155,8 @@ async function loadItems() {
             if (item.brand) tags += '<span class="tag">' + item.brand + '</span>';
             if (item.size) tags += '<span class="tag">' + item.size + '</span>';
             if (item.color) tags += '<span class="tag">' + item.color + '</span>';
-            var img = item.image_url ? '<img class="item-img" src="' + item.image_url + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
-            var html = '<div class="item-card">' + img +
+            var img = item.image_url ? '<img class="item-img" src="' + item.image_url + '" loading="lazy" onerror="this.style.display=\'none\'" onclick="showPriceHistory(\'' + item.vinted_id + '\', \'' + (item.title || '').replace(/'/g, '') + '\')">' : '';
+            var html = '<div class="item-card" onclick="showPriceHistory(\'' + item.vinted_id + '\', \'' + (item.title || '').replace(/'/g, '') + '\')">' + img +
                 '<div class="item-top"><span class="item-title">' + (item.title || '') + '</span><span class="item-price">' + item.price + ' zł</span></div>' +
                 '<div class="item-meta">' + tags + '</div>' +
                 (item.url ? '<a class="item-link" href="' + item.url + '" target="_blank">🔗 Zobacz na Vinted →</a>' : '') +
@@ -335,3 +335,89 @@ async function vintedLogout() {
 // --- Init ---
 loadDashboard();
 checkVintedStatus();
+
+
+// --- Price History ---
+function closePriceModal() { document.getElementById('price-modal').classList.remove('active'); }
+
+async function showPriceHistory(vintedId, title) {
+    document.getElementById('price-modal-title').textContent = '💰 ' + (title || 'Historia cen');
+    document.getElementById('price-modal').classList.add('active');
+    
+    try {
+        var res = await fetch(API + '/api/price-history/' + vintedId);
+        var data = await res.json();
+        var history = data.history || [];
+        var info = document.getElementById('price-history-info');
+        
+        if (history.length === 0) {
+            info.innerHTML = 'Brak historii cen dla tego przedmiotu.';
+            var ctx = document.getElementById('price-history-chart').getContext('2d');
+            ctx.clearRect(0, 0, 350, 200);
+            return;
+        }
+        
+        var prices = history.map(function(h) { return h.price; });
+        var min = Math.min.apply(null, prices);
+        var max = Math.max.apply(null, prices);
+        var avg = (prices.reduce(function(a, b) { return a + b; }, 0) / prices.length).toFixed(2);
+        
+        info.innerHTML = '<strong>Cena aktualna:</strong> ' + prices[prices.length - 1] + ' zł<br>' +
+            '<strong>Najniższa:</strong> ' + min + ' zł<br>' +
+            '<strong>Najwyższa:</strong> ' + max + ' zł<br>' +
+            '<strong>Średnia:</strong> ' + avg + ' zł<br>' +
+            '<strong>Pomiarów:</strong> ' + history.length;
+        
+        // Draw chart
+        var canvas = document.getElementById('price-history-chart');
+        var ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth * 2;
+        canvas.height = 400;
+        ctx.scale(2, 2);
+        var w = canvas.offsetWidth;
+        var h = 200;
+        var pad = { t: 20, r: 20, b: 30, l: 50 };
+        ctx.clearRect(0, 0, w, h);
+        
+        var cW = w - pad.l - pad.r;
+        var cH = h - pad.t - pad.b;
+        var range = max - min || 1;
+        
+        // Grid
+        ctx.strokeStyle = '#2e2e40';
+        ctx.lineWidth = 0.5;
+        for (var i = 0; i <= 3; i++) {
+            var y = pad.t + (cH / 3) * i;
+            ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
+            ctx.fillStyle = '#606078'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+            ctx.fillText((max - range * (i / 3)).toFixed(0) + 'zł', pad.l - 5, y + 3);
+        }
+        
+        // Line
+        if (history.length > 1) {
+            var grad = ctx.createLinearGradient(pad.l, 0, w - pad.r, 0);
+            grad.addColorStop(0, '#a855f7');
+            grad.addColorStop(1, '#06b6d4');
+            ctx.beginPath();
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 2;
+            history.forEach(function(h, i) {
+                var x = pad.l + (cW / (history.length - 1)) * i;
+                var y = pad.t + cH - ((h.price - min) / range) * cH;
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        }
+        
+        // Dots
+        history.forEach(function(h, i) {
+            var x = pad.l + (cW / Math.max(history.length - 1, 1)) * i;
+            var y = pad.t + cH - ((h.price - min) / range) * cH;
+            ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#06b6d4'; ctx.fill();
+        });
+        
+    } catch (e) {
+        document.getElementById('price-history-info').innerHTML = 'Błąd ładowania historii.';
+    }
+}
