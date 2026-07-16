@@ -352,3 +352,6 @@ async function toggleNotifyEmpty(id){
     const r=await fetch("/api/queries/"+id+"/toggle-notify",{method:"POST"})
     loadQueries()
 }
+
+loadDashboard();
+checkVintedStatus();
