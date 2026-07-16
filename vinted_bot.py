@@ -111,7 +111,8 @@ async def get_panel_queries():
     """Get active queries from panel"""
     async with httpx.AsyncClient() as client:
         resp = await client.get(f"{PANEL_URL}/api/bot/queries", timeout=10)
-        return resp.json().get("queries", [])
+        data = resp.json()
+        return data.get("queries", [])
 
 async def run_scraper_loop():
     """Main scraper loop"""
@@ -138,6 +139,19 @@ async def run_scraper_loop():
                         continue
                     
                     if not items:
+                        # Check if notify_empty is enabled
+                        try:
+                            async with httpx.AsyncClient() as hc:
+                                qr = await hc.get(f"{PANEL_URL}/api/bot/queries", timeout=10)
+                                queries_data = qr.json().get("queries", [])
+                                for qd in queries_data:
+                                    if qd["id"] == q["id"] and qd.get("notify_empty"):
+                                        await send_telegram(BOT_TOKEN, USER_CHAT_ID,
+                                            f"🔍 <b>{q['name']}</b>\n"
+                                            f"📭 Nic nowego nie znaleziono\n"
+                                            f"⏰ Następne sprawdzenie za {CHECK_INTERVAL//60} min")
+                        except:
+                            pass
                         continue
                     
                     # Send to panel

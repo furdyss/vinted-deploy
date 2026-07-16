@@ -219,6 +219,7 @@ async function loadQueries() {
                         <button class="btn btn-primary btn-sm" onclick="fetchNow(${q.id})">⚡ Fetch</button>
                         <button class="btn btn-secondary btn-sm" onclick="toggleQuery(${q.id})">🔄</button>
                         <button class="btn btn-danger btn-sm" onclick="deleteQuery(${q.id})">✕</button>
+<span style="font-size:16px;cursor:pointer;margin-left:8px" onclick="toggleNotifyEmpty(${q.id})" title="Powiadom gdy pusto">${q.notify_empty ? "🔔" : "🔕"}</span>
                     </div>
                 </td>
             </tr>
@@ -345,4 +346,9 @@ if(!confirm("Wylogować?"))return
 await fetch("/api/vinted/logout",{method:"POST"})
 showToast("Wylogowano")
 checkVintedStatus()
+}
+
+async function toggleNotifyEmpty(id){
+    const r=await fetch("/api/queries/"+id+"/toggle-notify",{method:"POST"})
+    loadQueries()
 }

@@ -214,7 +214,7 @@ async def get_queries(db: AsyncSession = Depends(get_db)):
                 "name": q.name,
                 "url": q.url,
                 "is_active": q.is_active,
-                "interval_minutes": q.interval_minutes,
+                "interval_minutes": q.interval_minutes, "notify_empty": q.notify_empty,
                 "last_run": q.last_run.isoformat() if q.last_run else None,
                 "created_at": q.created_at.isoformat() if q.created_at else None,
             }
@@ -236,7 +236,7 @@ async def add_query(
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Query already exists")
 
-    q = SearchQuery(name=name, url=url, interval_minutes=interval)
+    q = SearchQuery(name=name, url=url, interval_minutes=interval, notify_empty=False)
     db.add(q)
     await db.commit()
     return {"status": "ok", "id": q.id}
@@ -428,6 +428,15 @@ async def vinted_logout(db: AsyncSession = Depends(get_db)):
         return {"status": "ok", "message": "Wylogowano"}
     except:
         return {"status": "ok"}
+
+
+@app.post("/api/queries/{qid}/toggle-notify")
+async def toggle_notify_empty(qid:int, db:AsyncSession=Depends(get_db)):
+    q=(await db.execute(select(SearchQuery).where(SearchQuery.id==qid))).scalar_one_or_none()
+    if not q:raise HTTPException(404)
+    q.notify_empty = not q.notify_empty
+    await db.commit()
+    return{"notify_empty": q.notify_empty}
 
 # ==================== BOT API ====================
 
