@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wariant 2 - Glass Pro</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(180deg,#0f0c29,#302b63,#24243e);color:#fff;font-family:-apple-system,sans-serif;padding:16px;min-height:100vh}
+h2{text-align:center;font-size:18px;margin:16px 0;color:#fff;letter-spacing:1px}
+.card{background:rgba(255,255,255,0.06);backdrop-filter:blur(20px);border-radius:20px;padding:20px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.08)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{text-align:center;padding:14px 8px}
+.stat .num{font-size:22px;font-weight:700;color:#f59e0b}
+.stat .lbl{font-size:10px;color:rgba(255,255,255,0.5);margin-top:4px;text-transform:uppercase}
+.nav{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:16px}
+.nav a{background:rgba(255,255,255,0.08);color:#fff;text-decoration:none;padding:8px 16px;border-radius:12px;font-size:12px;white-space:nowrap}
+.nav a.active{background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)}
+.item{background:rgba(255,255,255,0.04);border-radius:16px;padding:16px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);display:flex;gap:14px}
+.item .img{width:70px;height:70px;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.item .info{flex:1}
+.item .title{font-size:13px;font-weight:600;margin-bottom:4px}
+.item .price{font-size:18px;font-weight:700;color:#f59e0b}
+.item .tags{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.item .tag{font-size:10px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6)}
+.alert{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:12px;text-align:center;font-size:12px;color:#f59e0b;margin-bottom:16px}
+</style>
+</head>
+<body>
+<h2>Market Intelligence</h2>
+<div class="nav">
+<a class="active">📊 Dashboard</a><a>📦 Przedmioty</a><a>🔍 Szukaj</a><a>📈 Analiza</a><a>👤 Konto</a>
+</div>
+<div class="stats card">
+<div class="stat"><div class="num">1.247</div><div class="lbl">Wszystkie</div></div>
+<div class="stat"><div class="num">89 zł</div><div class="lbl">Średnia</div></div>
+<div class="stat"><div class="num">47</div><div class="lbl">Dziś</div></div>
+</div>
+<div class="alert">🔔 3 nowe przedmioty w ostatnich 2 minutach</div>
+<h2>Ostatnio znalezione</h2>
+<div class="item">
+<div class="img">👟</div>
+<div class="info"><div class="title">Nike Air Max 90</div><div class="price">159 zł</div><div class="tags"><span class="tag">Nike</span><span class="tag">42</span><span class="tag">Nowe</span></div></div>
+</div>
+<div class="item">
+<div class="img">🧥</div>
+<div class="info"><div class="title">Kurtka Adidas windbreaker</div><div class="price">79 zł</div><div class="tags"><span class="tag">Adidas</span><span class="tag">L</span><span class="tag">Używane</span></div></div>
+</div>
+<div class="item">
+<div class="img">👜</div>
+<div class="info"><div class="title">Torebka Zara crossbody</div><div class="price">45 zł</div><div class="tags"><span class="tag">Zara</span><span class="tag">One size</span></div></div>
+</div>
+<div class="item">
+<div class="img">👗</div>
+<div class="info"><div class="title">Sukienka H&M letnia</div><div class="price">29 zł</div><div class="tags"><span class="tag">H&M</span><span class="tag">S</span><span class="tag">Nowe</span></div></div>
+</div>
+<div class="card">
+<h3 style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:12px">📈 Trend cen (7 dni)</h3>
+<svg viewBox="0 0 300 60" width="100%">
+<defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#ef4444"/></linearGradient></defs>
+<path d="M0,50 Q30,40 60,45 T120,30 T180,35 T240,20 T300,10" fill="none" stroke="url(#g2)" stroke-width="2"/>
+<path d="M0,50 Q30,40 60,45 T120,30 T180,35 T240,20 T300,10 L300,60 L0,60 Z" fill="url(#g2)" opacity="0.1"/>
+</svg>
+</div>
+</body></html>

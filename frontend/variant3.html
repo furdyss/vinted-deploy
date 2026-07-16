@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wariant 3 - Clean Minimal</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#111;color:#eee;font-family:-apple-system,sans-serif;padding:0}
+.header{padding:20px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222}
+.header h1{font-size:16px;font-weight:600}
+.header .badge{background:#22c55e;color:#000;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:700}
+.tabs{display:flex;border-bottom:1px solid #222;overflow-x:auto}
+.tabs a{padding:14px 16px;font-size:13px;color:#666;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent}
+.tabs a.on{color:#fff;border-bottom-color:#22c55e}
+.content{padding:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:#222;border-radius:12px;overflow:hidden;margin-bottom:20px}
+.grid .cell{background:#1a1a1a;padding:16px;text-align:center}
+.grid .cell .v{font-size:24px;font-weight:700;color:#22c55e}
+.grid .cell .l{font-size:10px;color:#666;margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+.section-title{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;font-weight:600}
+.row{background:#1a1a1a;border-radius:12px;padding:14px 16px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center}
+.row .left{flex:1}
+.row .name{font-size:13px;font-weight:500}
+.row .sub{font-size:11px;color:#555;margin-top:2px}
+.row .right{text-align:right}
+.row .price{font-size:16px;font-weight:700;color:#22c55e}
+.row .time{font-size:10px;color:#444;margin-top:2px}
+.row:active{background:#222}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;border-top:1px solid #222;display:flex;justify-content:space-around;padding:12px 0}
+.bottom-bar a{text-decoration:none;color:#555;font-size:10px;text-align:center}
+.bottom-bar a.on{color:#22c55e}
+.bottom-bar .icon{font-size:20px;display:block;margin-bottom:2px}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>Vinted Market</h1>
+<span class="badge">● LIVE</span>
+</div>
+<div class="tabs">
+<a class="on">Dashboard</a>
+<a>Przedmioty</a>
+<a>Szukaj</a>
+<a>Analiza</a>
+</div>
+<div class="content">
+<div class="grid">
+<div class="cell"><div class="v">1.247</div><div class="l">Przedmioty</div></div>
+<div class="cell"><div class="v">89 zł</div><div class="l">Średnia</div></div>
+<div class="cell"><div class="v">12 zł</div><div class="l">Min</div></div>
+<div class="cell"><div class="v">459 zł</div><div class="l">Max</div></div>
+</div>
+<div class="section-title">Ostatnio znalezione</div>
+<div class="row">
+<div class="left"><div class="name">Nike Air Max 90</div><div class="sub">Nike · 42 · Nowe</div></div>
+<div class="right"><div class="price">159 zł</div><div class="time">2 min temu</div></div>
+</div>
+<div class="row">
+<div class="left"><div class="name">Kurtka Adidas</div><div class="sub">Adidas · L · Używane</div></div>
+<div class="right"><div class="price">79 zł</div><div class="time">5 min temu</div></div>
+</div>
+<div class="row">
+<div class="left"><div class="name">Torebka Zara</div><div class="sub">Zara · One size</div></div>
+<div class="right"><div class="price">45 zł</div><div class="time">8 min temu</div></div>
+</div>
+<div class="row">
+<div class="left"><div class="name">Sukienka H&M</div><div class="sub">H&M · S · Nowe</div></div>
+<div class="right"><div class="price">29 zł</div><div class="time">12 min temu</div></div>
+</div>
+<div class="row">
+<div class="left"><div class="name">Bluza New Balance</div><div class="sub">New Balance · M · Nowe</div></div>
+<div class="right"><div class="price">99 zł</div><div class="time">15 min temu</div></div>
+</div>
+<div style="height:60px"></div>
+</div>
+<div class="bottom-bar">
+<a class="on"><span class="icon">📊</span>Dashboard</a>
+<a><span class="icon">📦</span>Przedmioty</a>
+<a><span class="icon">🔍</span>Szukaj</a>
+<a><span class="icon">👤</span>Konto</a>
+</div>
+</body></html>

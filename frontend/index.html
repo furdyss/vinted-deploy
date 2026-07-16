@@ -3,15 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
-<meta name="theme-color" content="#0a0a12">
+<meta name="theme-color" content="#0a0a1a">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="manifest" href="/static/manifest.json?v=1784188545">
 <title>Vinted Panel</title>
-<link rel="stylesheet" href="/static/css/style.css?v=1784188545">
+<link rel="stylesheet" href="/static/css/neon.css">
 </head>
 <body>
 
@@ -19,79 +16,81 @@
 
 <aside class="sidebar" id="sidebar">
 <div class="sidebar-header">
-<h1>💎 Vinted Panel</h1>
+<h1>💎 VINTED</h1>
 <p>Market Intelligence</p>
 </div>
 <nav class="nav">
-<div class="nav-item active" onclick="showPage('dashboard')">
+<div class="nav-item active" onclick="showPage('dashboard',this)">
 <span class="icon">📊</span> Dashboard
 </div>
-<div class="nav-item" onclick="showPage('items')">
+<div class="nav-item" onclick="showPage('items',this)">
 <span class="icon">📦</span> Przedmioty
 </div>
-<div class="nav-item" onclick="showPage('queries')">
+<div class="nav-item" onclick="showPage('queries',this)">
 <span class="icon">🔍</span> Wyszukiwania
 </div>
-<div class="nav-item" onclick="showPage('analysis')">
+<div class="nav-item" onclick="showPage('analysis',this)">
 <span class="icon">📈</span> Analiza
 </div>
-<div class="nav-item" onclick="showPage('bot')">
+<div class="nav-item" onclick="showPage('bot',this)">
 <span class="icon">🤖</span> Bot
 </div>
-<div class="nav-item" onclick="showPage('account')">
+<div class="nav-item" onclick="showPage('account',this)">
 <span class="icon">👤</span> Konto
 </div>
 </nav>
-<div style="padding:16px 20px;border-top:1px solid var(--glass-border)">
-<div id="vinted-login-status" style="font-size:12px;color:var(--t3);margin-bottom:8px">Vinted: <span id="vinted-status-text">Sprawdzam...</span></div>
-<button class="btn btn-primary btn-sm" style="width:100%" onclick="showLoginModal()">🔐 Zaloguj Vinted</button>
+<div class="sidebar-footer">
+<div id="vinted-login-status" class="login-status">Vinted: <span id="vinted-status-text">Sprawdzam...</span></div>
+<button class="btn btn-neon btn-full" onclick="showLoginModal()">🔐 Zaloguj Vinted</button>
 </div>
 </aside>
 
 <main class="main">
 
 <div class="page active" id="page-dashboard">
-<div class="page-header"><h2>Dashboard</h2></div>
+<h2 class="page-title">Dashboard</h2>
 <div class="stats-grid" id="stats-grid"></div>
-<div class="chart-container">
-<h3>📈 Trend cenowy (30 dni)</h3>
+<div class="chart-box">
+<h3 class="chart-title">📈 Trend cenowy (30 dni)</h3>
 <canvas class="chart-canvas" id="trend-chart"></canvas>
 </div>
-<h3 style="margin-bottom:16px;color:var(--t2);font-size:13px;text-transform:uppercase;letter-spacing:1px;font-weight:600">🏷️ Top Marki</h3>
+<div class="chart-box">
+<h3 class="chart-title">🏷️ Top Marki</h3>
 <div id="brand-bars" class="brand-bars"></div>
+</div>
 </div>
 
 <div class="page" id="page-items">
-<div class="page-header"><h2>Przedmioty</h2></div>
+<h2 class="page-title">Przedmioty</h2>
 <div class="search-bar">
 <input class="search-input" id="item-search" placeholder="🔎 Szukaj przedmiotów..." oninput="debounceSearch()">
-<select class="search-input" style="max-width:180px" id="item-sort" onchange="loadItems()">
+<select class="search-input select" id="item-sort" onchange="loadItems()">
 <option value="newest">🕐 Najnowsze</option>
 <option value="price_asc">💰 Cena ↑</option>
 <option value="price_desc">💎 Cena ↓</option>
 </select>
 </div>
 <div class="items-grid" id="items-grid"></div>
-<div style="text-align:center;margin-top:24px">
-<button class="btn btn-secondary" id="load-more-btn" onclick="loadMore()" style="display:none">Pokaż więcej</button>
+<div class="center" style="margin-top:20px">
+<button class="btn btn-neon" id="load-more-btn" onclick="loadMore()" style="display:none">Pokaż więcej</button>
 </div>
 </div>
 
 <div class="page" id="page-queries">
-<div class="page-header">
-<h2>Wyszukiwania</h2>
-<button class="btn btn-primary" onclick="showAddQueryModal()">✨ Nowe</button>
+<div class="page-title-row">
+<h2 class="page-title">Wyszukiwania</h2>
+<button class="btn btn-neon" onclick="showAddQueryModal()">✨ Nowe</button>
 </div>
 <div class="table-wrap">
 <table>
-<thead><tr><th>Nazwa</th><th>URL</th><th>Status</th><th>Co ile</th><th>Kiedy</th><th></th></tr></thead>
+<thead><tr><th>Nazwa</th><th>URL</th><th>Status</th><th>Co ile</th><th>Powiadom</th><th></th></tr></thead>
 <tbody id="queries-table"></tbody>
 </table>
 </div>
 </div>
 
 <div class="page" id="page-analysis">
-<div class="page-header"><h2>Analiza Marek</h2></div>
+<h2 class="page-title">Analiza Marek</h2>
 <div class="table-wrap">
 <table>
 <thead><tr><th>Marka</th><th>Ilość</th><th>Śr.</th><th>Min</th><th>Max</th></tr></thead>
@@ -100,27 +99,47 @@
 </div>
 </div>
 
+<div class="page" id="page-bot">
+<h2 class="page-title">🤖 Bot Status</h2>
+<div class="card">
+<div class="card-label">Status bota</div>
+<div id="bot-status" class="card-value neon-text">Sprawdzam...</div>
+</div>
+<div class="card">
+<div class="card-label">Panel URL</div>
+<div class="card-value">http://169.58.23.67:8080</div>
+</div>
+<div class="card">
+<div class="card-label">Instrukcja</div>
+<div class="card-text">
+1. Otwórz Termux<br>
+2. cd vinted-bot<br>
+3. nohup python3 vinted_bot.py &<br>
+4. Bot scrapuje co 2 minuty
+</div>
+</div>
+</div>
 
 <div class="page" id="page-account">
-<div class="page-header"><h2>👤 Konto Vinted</h2></div>
-<div class="stat-card" style="margin-bottom:20px">
-<div class="label">Status konta</div>
-<div id="account-status" style="margin-top:12px;font-size:16px;font-weight:600">Sprawdzam...</div>
+<h2 class="page-title">👤 Konto Vinted</h2>
+<div class="card">
+<div class="card-label">Status konta</div>
+<div id="account-status" class="card-value">Sprawdzam...</div>
 </div>
-<div class="stat-card" style="margin-bottom:20px">
-<h3 style="font-size:16px;margin-bottom:16px">🔐 Zaloguj się do Vinted</h3>
-<p style="font-size:13px;color:var(--t2);margin-bottom:16px">Dane logowania są bezpieczne. Używane tylko do sesji Vinted.</p>
+<div class="card">
+<h3 class="card-title">🔐 Zaloguj się do Vinted</h3>
+<p class="card-desc">Dane logowania są bezpieczne. Używane tylko do sesji Vinted.</p>
 <div class="form-group"><label>Email</label><input id="login-email" type="email" placeholder="twoj@email.com"></div>
 <div class="form-group"><label>Hasło</label><input id="login-password" type="password" placeholder="••••••••"></div>
-<div id="login-error" style="color:var(--err);font-size:13px;margin-bottom:12px"></div>
+<div id="login-error" class="error-text"></div>
 <div style="display:flex;gap:10px">
-<button class="btn btn-primary" onclick="vintedLogin()">Zaloguj się</button>
-<button class="btn btn-danger btn-sm" onclick="vintedLogout()">Wyloguj</button>
+<button class="btn btn-neon" onclick="vintedLogin()">Zaloguj się</button>
+<button class="btn btn-danger" onclick="vintedLogout()">Wyloguj</button>
 </div>
 </div>
-<div class="stat-card">
-<div class="label">Co zyskujesz po zalogowaniu</div>
-<div style="margin-top:12px;font-size:13px;color:var(--t2);line-height:2">
+<div class="card">
+<div class="card-label">Co zyskujesz po zalogowaniu</div>
+<div class="card-text">
 ✅ Polubienia przedmiotów z panelu<br>
 ✅ Wysyłanie ofert do sprzedawców<br>
 ✅ Podgląd własnych ogłoszeń<br>
@@ -128,87 +147,48 @@
 </div>
 </div>
 </div>
+
 </main>
 
-<div class="modal-overlay" id="add-query-modal">
-<div class="modal">
+<!-- Add Query Modal -->
+<div class="modal" id="add-query-modal">
+<div class="modal-content">
+<div class="modal-header">
 <h3>✨ Nowe wyszukiwanie</h3>
-<div class="form-group"><label>Nazwa</label><input id="q-name" placeholder="np. Nike Air Force"></div>
-<div class="form-group"><label>URL Vinted</label><input id="q-url" placeholder="https://www.vinted.pl/catalog?search_text=nike"></div>
-<div class="form-group"><label>Interwał (min)</label><input id="q-interval" type="number" value="30" min="5"></div>
-<div class="modal-actions">
-<button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
-<button class="btn btn-primary" onclick="addQuery()">Dodaj</button>
+<button class="modal-close" onclick="closeModal()">✕</button>
 </div>
+<div class="form-group"><label>Nazwa</label><input id="q-name" placeholder="np. Nike Air Max"></div>
+<div class="form-group"><label>URL z Vinted</label><input id="q-url" placeholder="https://www.vinted.pl/catalog?search_text=nike+air+max"></div>
+<div class="form-group"><label>Co ile minut</label>
+<select id="q-interval" class="search-input select">
+<option value="5">Co 5 min</option>
+<option value="10">Co 10 min</option>
+<option value="15">Co 15 min</option>
+<option value="30" selected>Co 30 min</option>
+<option value="60">Co 60 min</option>
+</select>
+</div>
+<button class="btn btn-neon btn-full" onclick="addQuery()">Dodaj</button>
 </div>
 </div>
 
+<!-- Login Modal -->
+<div class="modal" id="login-modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3>🔐 Zaloguj do Vinted</h3>
+<button class="modal-close" onclick="closeLoginModal()">✕</button>
+</div>
+<div class="form-group"><label>Email</label><input id="modal-email" type="email" placeholder="twoj@email.com"></div>
+<div class="form-group"><label>Hasło</label><input id="modal-password" type="password" placeholder="••••••••"></div>
+<div id="modal-login-error" class="error-text"></div>
+<button class="btn btn-neon btn-full" onclick="modalLogin()">Zaloguj</button>
+</div>
+</div>
 
-<div class="modal-overlay" id="login-modal">
-<div class="modal">
-<h3>🔐 Zaloguj się do Vinted</h3>
-<p style="font-size:13px;color:var(--t2);margin-bottom:20px">Dane logowania są bezpieczne. Używane tylko do sesji Vinted.</p>
-<div class="form-group"><label>Email</label><input id="login-email" type="email" placeholder="twoj@email.com"></div>
-<div class="form-group"><label>Hasło</label><input id="login-password" type="password" placeholder="••••••••"></div>
-<div id="login-error" style="color:var(--err);font-size:12px;margin-bottom:10px"></div>
-<div class="modal-actions">
-<button class="btn btn-secondary" onclick="closeLoginModal()">Anuluj</button>
-<button class="btn btn-primary" onclick="vintedLogin()">Zaloguj się</button>
-</div>
-</div>
-</div>
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<div class="page" id="page-bot">
-<div class="page-header"><h2>🤖 Telegram Bot</h2></div>
-
-<div class="stat-card" style="margin-bottom:20px">
-<div class="label">Status połączenia</div>
-<div class="value accent" id="bot-status" style="font-size:18px;margin-top:8px">Sprawdzam...</div>
-<div style="margin-top:12px;font-size:13px;color:var(--t2)">
-🤖 Bot scrapuje Vinted z Twojego telefonu<br>
-📤 Wysyła dane do tego panelu<br>
-🔔 Alerty na Telegram
-</div>
-</div>
-
-<div class="stat-card" style="margin-bottom:20px">
-<div class="label">Instrukcja instalacji</div>
-<div style="margin-top:12px;font-size:13px;color:var(--t2);line-height:1.8">
-<strong>1.</strong> Zainstaluj <b>Termux</b> (z F-Droid!)<br>
-<strong>2.</strong> W Termux wklej:<br>
-<div style="background:rgba(0,0,0,0.3);padding:8px 12px;border-radius:8px;margin:8px 0;font-family:monospace;font-size:12px;color:var(--ok)">
-pkg update && pkg install python -y<br>
-pip install httpx aiosqlite<br>
-curl -sL https://raw.githubusercontent.com/furdyss/vinted-deploy/main/start-bot.sh | bash
-</div>
-<strong>3.</strong> Bot uruchomi się automatycznie<br>
-<strong>4.</strong> Napisz "/start" do bota na Telegramie
-</div>
-</div>
-
-<div class="stat-card">
-<div class="label">Logi bota (ostatnie 10)</div>
-<div id="bot-logs" style="margin-top:12px;font-size:12px;color:var(--t3);font-family:monospace;max-height:200px;overflow-y:auto">
-Ładowanie logów...
-</div>
-</div>
-
-</div>
-
-<script src="/static/js/app.js?v=1784188545"></script>
-
-<div onclick="forceRefresh()" style="position:fixed;bottom:24px;left:24px;z-index:300;background:rgba(18,18,30,0.9);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);border-radius:50px;padding:12px 20px;cursor:pointer;font-size:13px;color:var(--t2);display:flex;align-items:center;gap:8px;transition:all 0.3s" onmouseover="this.style.borderColor='var(--acc)';this.style.color='var(--t1)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='var(--t2)'">
-🔄 Odśwież
-</div>
-<script>
-function forceRefresh(){
-    localStorage.clear();
-    sessionStorage.clear();
-    caches.keys().then(function(names){names.forEach(function(name){caches.delete(name)})});
-    window.location.href="/?v=1784188546";
-}
-</script>
-
+<script src="/static/js/neon.js"></script>
 </body>
 </html>

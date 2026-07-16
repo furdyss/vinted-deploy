@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wariant 1 - Neon Market</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a1a;color:#fff;font-family:-apple-system,sans-serif;padding:16px}
+h2{text-align:center;font-size:20px;margin:20px 0;color:#a855f7;letter-spacing:2px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.stat{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:16px;padding:20px;text-align:center;border:1px solid rgba(168,85,247,0.2)}
+.stat .num{font-size:28px;font-weight:800;background:linear-gradient(135deg,#a855f7,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat .lbl{font-size:11px;color:#888;margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+.item{background:linear-gradient(135deg,#1a1a2e,#0f3460);border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid rgba(6,182,212,0.15)}
+.item .top{display:flex;justify-content:space-between;align-items:center}
+.item .title{font-size:14px;font-weight:600;flex:1;margin-right:10px}
+.item .price{font-size:20px;font-weight:800;color:#06b6d4}
+.item .meta{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.item .tag{background:rgba(168,85,247,0.15);color:#a855f7;font-size:11px;padding:4px 10px;border-radius:20px}
+.item .link{display:inline-block;margin-top:10px;color:#06b6d4;font-size:12px;text-decoration:none}
+.chart-box{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:16px;padding:20px;margin-bottom:20px;border:1px solid rgba(168,85,247,0.2)}
+.chart-box h3{font-size:14px;color:#888;margin-bottom:16px}
+.bar{height:8px;border-radius:4px;margin-bottom:8px;background:#1a1a2e;overflow:hidden}
+.bar .fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#a855f7,#06b6d4)}
+.bar .label{display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px}
+</style>
+</head>
+<body>
+<h2>💎 NEON MARKET</h2>
+<div class="stats">
+<div class="stat"><div class="num">1.247</div><div class="lbl">Przedmioty</div></div>
+<div class="stat"><div class="num">89 zł</div><div class="lbl">Śr. cena</div></div>
+<div class="stat"><div class="num">3</div><div class="lbl">Aktywne wysz.</div></div>
+<div class="stat"><div class="num">47</div><div class="lbl">Nowe dzisiaj</div></div>
+</div>
+<div class="chart-box">
+<h3>📈 Trend cenowy (7 dni)</h3>
+<svg viewBox="0 0 300 80" width="100%">
+<defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+<polyline points="0,60 40,45 80,55 120,30 160,35 200,20 240,25 280,15" fill="none" stroke="url(#g1)" stroke-width="2.5"/>
+<circle cx="280" cy="15" r="4" fill="#06b6d4"/>
+</svg>
+</div>
+<div class="chart-box">
+<h3>🏷️ Top Marki</h3>
+<div class="bar"><div class="label"><span>Nike</span><span>342</span></div><div class="fill" style="width:90%"></div></div>
+<div class="bar"><div class="label"><span>Adidas</span><span>256</span></div><div class="fill" style="width:70%"></div></div>
+<div class="bar"><div class="label"><span>Zara</span><span>198</span></div><div class="fill" style="width:55%"></div></div>
+<div class="bar"><div class="label"><span>H&M</span><span>145</span></div><div class="fill" style="width:40%"></div></div>
+</div>
+<h2>📦 Ostatnio znalezione</h2>
+<div class="item">
+<div class="top"><span class="title">Kurtka zimowa Nike</span><span class="price">129 zł</span></div>
+<div class="meta"><span class="tag">Nike</span><span class="tag">M</span><span class="tag">Czarny</span></div>
+<a class="link" href="#">🔗 Zobacz na Vinted →</a>
+</div>
+<div class="item">
+<div class="top"><span class="title">Buty Adidas Ultraboost</span><span class="price">89 zł</span></div>
+<div class="meta"><span class="tag">Adidas</span><span class="tag">42</span><span class="tag">Białe</span></div>
+<a class="link" href="#">🔗 Zobacz na Vinted →</a>
+</div>
+<div class="item">
+<div class="top"><span class="title">Sukienka Zara midi</span><span class="price">49 zł</span></div>
+<div class="meta"><span class="tag">Zara</span><span class="tag">S</span><span class="tag">Niebieski</span></div>
+<a class="link" href="#">🔗 Zobacz na Vinted →</a>
+</div>
+</body></html>
