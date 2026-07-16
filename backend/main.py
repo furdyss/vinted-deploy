@@ -347,6 +347,88 @@ async def fetch_now(qid:int,db:AsyncSession=Depends(get_db)):
 
 
 
+
+# ==================== VINTED LOGIN ====================
+
+from pydantic import BaseModel
+
+class VintedLoginRequest(BaseModel):
+    email: str
+    password: str
+
+@app.post("/api/vinted/login")
+async def vinted_login(req: VintedLoginRequest, db: AsyncSession = Depends(get_db)):
+    """Login to Vinted and store session"""
+    try:
+        import httpx
+        
+        async with httpx.AsyncClient(follow_redirects=True, timeout=20) as client:
+            # Step 1: Get main page for cookies and CSRF
+            resp = await client.get("https://www.vinted.pl", headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml",
+                "Accept-Language": "pl-PL,pl;q=0.9",
+            })
+            cookies = dict(resp.cookies)
+            
+            # Step 2: Login
+            login_data = {
+                "email": req.email,
+                "password": req.password,
+            }
+            
+            login_headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                "Referer": "https://www.vinted.pl",
+            }
+            
+            resp = await client.post("https://www.vinted.pl/session", json=login_data, headers=login_headers, cookies=cookies)
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                session_cookie = cookies.get("_vinted_fr_session", "")
+                
+                # Store in database
+                from sqlalchemy import text
+                await db.execute(text("CREATE TABLE IF NOT EXISTS vinted_session (id INTEGER PRIMARY KEY, email TEXT, cookie TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"))
+                await db.execute(text("DELETE FROM vinted_session"))
+                await db.execute(text("INSERT INTO vinted_session (email, cookie) VALUES (:email, :cookie)"), {"email": req.email, "cookie": session_cookie})
+                await db.commit()
+                
+                return {"status": "ok", "message": "Zalogowano pomyślnie!"}
+            else:
+                return JSONResponse(content={"error": f"Logowanie nie powiodło się: {resp.status_code}"}, status_code=400)
+                
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+@app.get("/api/vinted/status")
+async def vinted_status(db: AsyncSession = Depends(get_db)):
+    """Check if Vinted session is active"""
+    try:
+        from sqlalchemy import text
+        result = await db.execute(text("SELECT email FROM vinted_session LIMIT 1"))
+        row = result.fetchone()
+        if row:
+            return {"status": "logged_in", "email": row[0]}
+        return {"status": "not_logged_in"}
+    except:
+        return {"status": "not_logged_in"}
+
+@app.post("/api/vinted/logout")
+async def vinted_logout(db: AsyncSession = Depends(get_db)):
+    """Logout from Vinted"""
+    try:
+        from sqlalchemy import text
+        await db.execute(text("DELETE FROM vinted_session"))
+        await db.commit()
+        return {"status": "ok", "message": "Wylogowano"}
+    except:
+        return {"status": "ok"}
+
 # ==================== BOT API ====================
 
 @app.post("/api/bot/import")

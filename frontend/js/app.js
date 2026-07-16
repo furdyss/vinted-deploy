@@ -308,3 +308,41 @@ function showToast(msg, type = 'success') {
 
 // --- Init ---
 loadDashboard();
+
+// ==================== VINTED LOGIN ====================
+function showLoginModal(){document.getElementById("login-modal").classList.add("active")}
+function closeLoginModal(){document.getElementById("login-modal").classList.remove("active")}
+async function vintedLogin(){
+const email=document.getElementById("login-email").value.trim()
+const pass=document.getElementById("login-password").value
+const err=document.getElementById("login-error")
+if(!email||!pass){err.textContent="Wypełnij pola";return}
+err.textContent=""
+try{
+const r=await fetch("/api/vinted/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email,password:pass})})
+const d=await r.json()
+if(r.ok){showToast("Zalogowano!");closeLoginModal();checkVintedStatus()}
+else{err.textContent=d.error||"Błąd"}
+}catch(e){err.textContent="Błąd połączenia"}
+}
+async function checkVintedStatus(){
+try{
+const r=await fetch("/api/vinted/status")
+const d=await r.json()
+const el=document.getElementById("vinted-status-text")
+const acc=document.getElementById("account-status")
+if(d.status==="logged_in"){
+if(el){el.innerHTML="✅ "+d.email;el.style.color="var(--ok)"}
+if(acc){acc.innerHTML="✅ Zalogowano jako "+d.email;acc.style.color="var(--ok)"}
+}else{
+if(el){el.innerHTML="❌ Nie zalogowano";el.style.color="var(--err)"}
+if(acc){acc.innerHTML="❌ Nie zalogowano";acc.style.color="var(--err)"}
+}
+}catch(e){}
+}
+async function vintedLogout(){
+if(!confirm("Wylogować?"))return
+await fetch("/api/vinted/logout",{method:"POST"})
+showToast("Wylogowano")
+checkVintedStatus()
+}
