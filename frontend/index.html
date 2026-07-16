@@ -32,6 +32,9 @@
 <div class="nav-item" onclick="showPage('analysis')">
 <span class="icon">📈</span> Analiza
 </div>
+<div class="nav-item" onclick="showPage('bot')">
+<span class="icon">🤖</span> Bot
+</div>
 </nav>
 </aside>
 
@@ -103,6 +106,44 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="page" id="page-bot">
+<div class="page-header"><h2>🤖 Telegram Bot</h2></div>
+
+<div class="stat-card" style="margin-bottom:20px">
+<div class="label">Status połączenia</div>
+<div class="value accent" id="bot-status" style="font-size:18px;margin-top:8px">Sprawdzam...</div>
+<div style="margin-top:12px;font-size:13px;color:var(--t2)">
+🤖 Bot scrapuje Vinted z Twojego telefonu<br>
+📤 Wysyła dane do tego panelu<br>
+🔔 Alerty na Telegram
+</div>
+</div>
+
+<div class="stat-card" style="margin-bottom:20px">
+<div class="label">Instrukcja instalacji</div>
+<div style="margin-top:12px;font-size:13px;color:var(--t2);line-height:1.8">
+<strong>1.</strong> Zainstaluj <b>Termux</b> (z F-Droid!)<br>
+<strong>2.</strong> W Termux wklej:<br>
+<div style="background:rgba(0,0,0,0.3);padding:8px 12px;border-radius:8px;margin:8px 0;font-family:monospace;font-size:12px;color:var(--ok)">
+pkg update && pkg install python -y<br>
+pip install httpx aiosqlite<br>
+curl -sL https://raw.githubusercontent.com/furdyss/vinted-deploy/main/start-bot.sh | bash
+</div>
+<strong>3.</strong> Bot uruchomi się automatycznie<br>
+<strong>4.</strong> Napisz "/start" do bota na Telegramie
+</div>
+</div>
+
+<div class="stat-card">
+<div class="label">Logi bota (ostatnie 10)</div>
+<div id="bot-logs" style="margin-top:12px;font-size:12px;color:var(--t3);font-family:monospace;max-height:200px;overflow-y:auto">
+Ładowanie logów...
+</div>
+</div>
+
+</div>
+
 <script src="/static/js/app.js"></script>
 </body>
 </html>
