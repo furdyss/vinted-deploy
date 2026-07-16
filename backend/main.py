@@ -454,6 +454,22 @@ async def set_cookie(data: dict, db: AsyncSession = Depends(get_db)):
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
+
+@app.get("/api/brand-averages")
+async def get_brand_averages(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(
+            Item.brand,
+            func.avg(Item.price).label("avg_price"),
+            func.count(Item.id).label("count"),
+        )
+        .where(Item.brand.isnot(None))
+        .group_by(Item.brand)
+        .having(func.count(Item.id) >= 3)
+    )
+    rows = result.all()
+    return {r[0]: {"avg": round(r[1], 2), "count": r[2]} for r in rows}
+
 # ==================== BOT API ====================
 
 @app.post("/api/bot/import")

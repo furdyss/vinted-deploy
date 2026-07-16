@@ -84,6 +84,15 @@ async def handle_login(email, password):
     except Exception as e:
         return False, str(e)
 
+
+async def get_brand_averages():
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{PANEL_URL}/api/brand-averages", timeout=10)
+            return resp.json()
+    except:
+        return {}
+
 async def scraper_loop():
     global USER_CHAT_ID
     while True:
@@ -105,27 +114,42 @@ async def scraper_loop():
                     result = await send_to_panel(items)
                     imported = result.get("imported", 0)
                     if imported > 0:
-                        for i in items[:imported]:
-                            price = i.get('price', 0)
-                            target = q.get('target_price')
-                            is_deal = target and price > 0 and price <= target
+                        # Get brand averages for deal detection
+                            averages = await get_brand_averages()
                             
-                            if is_deal:
-                                msg = f"🔥 <b>OKAZJA!</b> {q['name']}\n"
-                                msg += f"💰 <b>{price} zł</b> (docelowa: {target} zł)\n"
-                                msg += f"📦 {i.get('title','')}\n"
-                                if i.get('brand'): msg += f"🏷️ {i['brand']}\n"
-                                if i.get('size'): msg += f"📏 {i['size']}\n"
-                                msg += f"🔗 {i.get('url','')}"
-                            else:
-                                msg = f"🔍 <b>{q['name']}</b>\n"
-                                msg += f"💰 <b>{price} zł</b>\n"
-                                msg += f"📦 {i.get('title','')}\n"
-                                if i.get('brand'): msg += f"🏷️ {i['brand']}\n"
-                                if i.get('size'): msg += f"📏 {i['size']}\n"
-                                msg += f"🔗 {i.get('url','')}"
-                            await send_telegram(msg)
-                            await asyncio.sleep(1)
+                            for i in items[:imported]:
+                                price = i.get('price', 0)
+                                target = q.get('target_price')
+                                brand = i.get('brand')
+                                avg = averages.get(brand, {}).get('avg') if brand else None
+                                
+                                is_target_deal = target and price > 0 and price <= target
+                                is_brand_deal = avg and price > 0 and price <= avg * 0.6
+                                
+                                if is_target_deal:
+                                    savings = round(target - price, 2)
+                                    msg = f"🔥 <b>OKAZJA CENOWA!</b> {q['name']}\n"
+                                    msg += f"💰 <b>{price} zł</b> (docelowa: {target} zł)\n"
+                                    msg += f"💵 Oszczędzasz: {savings} zł\n"
+                                    msg += f"📦 {i.get('title','')}\n"
+                                    if brand: msg += f"🏷️ {brand}\n"
+                                    msg += f"🔗 {i.get('url','')}"
+                                elif is_brand_deal:
+                                    discount = round((1 - price/avg) * 100)
+                                    msg = f"⚡ <b>OKAZJA RYNKOWA!</b> {q['name']}\n"
+                                    msg += f"💰 <b>{price} zł</b> (śr. {avg} zł — {discount}% taniej!)\n"
+                                    msg += f"📦 {i.get('title','')}\n"
+                                    if brand: msg += f"🏷️ {brand}\n"
+                                    msg += f"🔗 {i.get('url','')}"
+                                else:
+                                    msg = f"🔍 <b>{q['name']}</b>\n"
+                                    msg += f"💰 <b>{price} zł</b>\n"
+                                    msg += f"📦 {i.get('title','')}\n"
+                                    if brand: msg += f"🏷️ {brand}\n"
+                                    if i.get('size'): msg += f"📏 {i['size']}\n"
+                                    msg += f"🔗 {i.get('url','')}"
+                                await send_telegram(msg)
+                                await asyncio.sleep(1)
                     await asyncio.sleep(2)
                 except Exception as e:
                     print(f"Error: {e}")
