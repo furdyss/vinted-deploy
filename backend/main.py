@@ -438,6 +438,20 @@ async def toggle_notify_empty(qid:int, db:AsyncSession=Depends(get_db)):
     await db.commit()
     return{"notify_empty": q.notify_empty}
 
+
+@app.post("/api/vinted/set-cookie")
+async def set_cookie(data: dict, db: AsyncSession = Depends(get_db)):
+    """Receive cookie from bot"""
+    try:
+        from sqlalchemy import text
+        await db.execute(text("CREATE TABLE IF NOT EXISTS vinted_session (id INTEGER PRIMARY KEY, email TEXT, cookie TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"))
+        await db.execute(text("DELETE FROM vinted_session"))
+        await db.execute(text("INSERT INTO vinted_session (email, cookie) VALUES (:email, :cookie)"), {"email": data.get("email",""), "cookie": data.get("cookie","")})
+        await db.commit()
+        return {"status": "ok"}
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
 # ==================== BOT API ====================
 
 @app.post("/api/bot/import")

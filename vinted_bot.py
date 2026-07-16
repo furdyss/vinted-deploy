@@ -114,6 +114,48 @@ async def get_panel_queries():
         data = resp.json()
         return data.get("queries", [])
 
+
+async def handle_login(email, password, chat_id):
+    """Login to Vinted from phone IP and send cookie to panel"""
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15",
+            "Accept": "text/html,application/xhtml+xml",
+            "Accept-Language": "pl-PL,pl;q=0.9",
+        }
+        
+        async with httpx.AsyncClient(follow_redirects=True, timeout=20) as client:
+            # Get session
+            resp = await client.get("https://www.vinted.pl", headers=headers)
+            cookies = dict(resp.cookies)
+            
+            await asyncio.sleep(1)
+            
+            # Login
+            login_data = {"email": email, "password": password}
+            login_headers = {
+                "User-Agent": headers["User-Agent"],
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                "Referer": "https://www.vinted.pl",
+            }
+            
+            resp = await client.post("https://www.vinted.pl/session", json=login_data, headers=login_headers, cookies=cookies)
+            
+            if resp.status_code == 200:
+                session_cookie = cookies.get("_vinted_fr_session", "")
+                
+                # Send cookie to panel
+                async with httpx.AsyncClient() as pc:
+                    await pc.post(f"{PANEL_URL}/api/vinted/set-cookie", json={"email": email, "cookie": session_cookie})
+                
+                return True, "Zalogowano pomyślnie!"
+            else:
+                return False, f"Błąd: {resp.status_code}"
+    except Exception as e:
+        return False, str(e)
+
 async def run_scraper_loop():
     """Main scraper loop"""
     global USER_CHAT_ID
@@ -236,7 +278,23 @@ async def main():
                         f"👤 Chat: {chat_id}"
                     )
                 
-                elif text == "/list":
+                
+                elif text.startswith("/login"):
+                    parts = text.split(" ", 2)
+                    if len(parts) < 3:
+                        await send_telegram(BOT_TOKEN, chat_id,
+                            "Użycie: /login email hasło\n\nPrzykład:\n/login twoj@email.com twojehaslo")
+                    else:
+                        email = parts[1]
+                        password = parts[2]
+                        await send_telegram(BOT_TOKEN, chat_id, "⏳ Logowanie do Vinted...")
+                        ok, msg = await handle_login(email, password, chat_id)
+                        if ok:
+                            await send_telegram(BOT_TOKEN, chat_id, f"✅ {msg}")
+                        else:
+                            await send_telegram(BOT_TOKEN, chat_id, f"❌ {msg}")
+
+elif text == "/list":
                     queries = await get_panel_queries()
                     if queries:
                         msg = "📋 <b>Aktywne wyszukiwania:</b>\n\n"
