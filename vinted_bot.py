@@ -105,11 +105,15 @@ async def scraper_loop():
                     result = await send_to_panel(items)
                     imported = result.get("imported", 0)
                     if imported > 0:
-                        msg = f"🔍 <b>{q['name']}</b>\n📊 Nowe: {imported}\n\n"
-                        for i in items[:5]:
-                            msg += f"💰 <b>{i['price']} zł</b> | {i.get('title','')[:40]}\n   🔗 {i.get('url','')}\n\n"
-                        if len(items) > 5: msg += f"... +{len(items)-5} w panelu"
-                        await send_telegram(msg)
+                        for i in items[:imported]:
+                            msg = f"🔍 <b>{q['name']}</b>\n"
+                            msg += f"💰 <b>{i['price']} zł</b>\n"
+                            msg += f"📦 {i.get('title','')}\n"
+                            if i.get('brand'): msg += f"🏷️ {i['brand']}\n"
+                            if i.get('size'): msg += f"📏 {i['size']}\n"
+                            msg += f"🔗 {i.get('url','')}"
+                            await send_telegram(msg)
+                            await asyncio.sleep(1)
                     await asyncio.sleep(2)
                 except Exception as e:
                     print(f"Error: {e}")
