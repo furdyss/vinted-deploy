@@ -562,10 +562,13 @@ async def bot_get_sellers(db: AsyncSession = Depends(get_db)):
 async def bot_update_seller(data: dict, db: AsyncSession = Depends(get_db)):
     seller_id = data.get("seller_id")
     item_count = data.get("item_count", 0)
+    user_id = data.get("user_id")
     result = await db.execute(select(WatchedSeller).where(WatchedSeller.id == seller_id))
     s = result.scalar_one_or_none()
     if s:
         s.last_item_count = item_count
+        if user_id:
+            s.user_id = user_id
         await db.commit()
     return {"status": "ok"}
 
