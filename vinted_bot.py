@@ -176,6 +176,8 @@ async def check_seller(seller):
                         "photo_url": photo_url, "url": f"https://www.vinted.pl/items/{vid}",
                         "brand": brand, "is_available": True
                     })
+                except Exception as e:
+                    print(f"Item update error: {e}")
                 
                 # Check for price change
                 if vid in old_items and old_items[vid] != price and old_items[vid] > 0:
@@ -212,8 +214,8 @@ async def check_seller(seller):
                             "title": "", "price": old_items[old_vid],
                             "is_available": False
                         })
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f"Sold item update error: {e}")
                     msg = f"✅ <b>Sprzedano!</b> {username}\n"
                     msg += f"📦 Przedmiot został sprzedany\n"
                     msg += f"💰 Ostatnia cena: {old_items[old_vid]} zł"
@@ -223,6 +225,8 @@ async def check_seller(seller):
             try:
                 await get_http_client().post(f"{PANEL_URL}/api/bot/sellers/update", 
                     json={"seller_id": seller_id, "item_count": current_count})
+            except Exception as e:
+                print(f"Seller count update error: {e}")
     
     except Exception as e:
         print(f"Seller check error: {e}")
