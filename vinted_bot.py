@@ -125,9 +125,21 @@ async def check_seller(seller):
         if not user_id:
             try:
                 print(f"[SELLER] Resolving user_id for {username}...")
-                async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15",
+                    "Accept": "text/html,application/xhtml+xml",
+                    "Accept-Language": "pl-PL,pl;q=0.9",
+                }
+                async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+                    # Get cookies first
+                    init_resp = await client.get("https://www.vinted.pl", headers=headers)
+                    cookies = dict(init_resp.cookies)
+                    await asyncio.sleep(1)
+                    
+                    # Now get user profile with cookies
+                    api_headers = {"User-Agent": headers["User-Agent"], "Accept": "application/json", "Referer": "https://www.vinted.pl"}
                     resp = await client.get(f"https://www.vinted.pl/api/v2/users/{username}",
-                        headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
+                        headers=api_headers, cookies=cookies)
                     print(f"[SELLER] Vinted API response: {resp.status_code}")
                     if resp.status_code == 200:
                         data = resp.json().get("user", {})
@@ -148,14 +160,20 @@ async def check_seller(seller):
         
         headers = {
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15",
-            "Accept": "application/json",
+            "Accept": "text/html,application/xhtml+xml",
             "Accept-Language": "pl-PL,pl;q=0.9",
         }
         
         async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+            # Get cookies
+            init_resp = await client.get("https://www.vinted.pl", headers=headers)
+            cookies = dict(init_resp.cookies)
+            await asyncio.sleep(1)
+            
+            api_headers = {"User-Agent": headers["User-Agent"], "Accept": "application/json", "Referer": "https://www.vinted.pl/catalog"}
             resp = await client.get(f"https://www.vinted.pl/api/v2/catalog/items",
                 params={"user_id": user_id, "per_page": "96", "order": "newest_first"},
-                headers=headers)
+                headers=api_headers, cookies=cookies)
             print(f"[SELLER] Items fetch: {resp.status_code} for user_id={user_id}")
             if resp.status_code != 200:
                 print(f"[SELLER] Failed: {resp.text[:100]}")
