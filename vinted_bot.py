@@ -172,14 +172,16 @@ async def check_seller(seller):
             
             api_headers = {"User-Agent": headers["User-Agent"], "Accept": "application/json", "Referer": "https://www.vinted.pl/catalog"}
             resp = await client.get(f"https://www.vinted.pl/api/v2/catalog/items",
-                params={"user_id": user_id, "per_page": "96", "order": "newest_first"},
+                params={"user_id": user_id, "per_page": "96", "order": "newest_first", "catalog_ids": ""},
                 headers=api_headers, cookies=cookies)
             print(f"[SELLER] Items fetch: {resp.status_code} for user_id={user_id}")
             if resp.status_code != 200:
                 print(f"[SELLER] Failed: {resp.text[:100]}")
                 return
-            items = resp.json().get("items", [])
+            data = resp.json()
+            items = data.get("items", [])
             current_count = len(items)
+            print(f"[SELLER] Fetched {current_count} items for user_id={user_id}")
             
             # Get previously tracked items
             old_resp = await get_http_client().get(f"{PANEL_URL}/api/bot/seller-items/{seller_id}", timeout=10)
