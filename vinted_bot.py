@@ -117,23 +117,31 @@ async def get_watched_sellers():
 async def check_seller(seller):
     try:
         username = seller["username"]
+        print(f"[SELLER] Checking {username}...")
         user_id = seller.get("user_id")
         seller_id = seller["id"]
         last_count = seller.get("last_item_count", 0)
         
         if not user_id:
             try:
+                print(f"[SELLER] Resolving user_id for {username}...")
                 async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
                     resp = await client.get(f"https://www.vinted.pl/api/v2/users/{username}",
                         headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
+                    print(f"[SELLER] Vinted API response: {resp.status_code}")
                     if resp.status_code == 200:
                         data = resp.json().get("user", {})
                         user_id = str(data.get("id", ""))
-                        async with httpx.AsyncClient() as pc:
-                            await pc.post(f"{PANEL_URL}/api/bot/sellers/update",
+                        print(f"[SELLER] Got user_id: {user_id}")
+                        try:
+                            await get_http_client().post(f"{PANEL_URL}/api/bot/sellers/update",
                                 json={"seller_id": seller_id, "user_id": user_id})
-            except:
-                pass
+                        except Exception as e2:
+                            print(f"[SELLER] Failed to update panel: {e2}")
+                    else:
+                        print(f"[SELLER] Vinted returned {resp.status_code}: {resp.text[:100]}")
+            except Exception as e:
+                print(f"[SELLER] Error resolving user_id for {username}: {e}")
         
         if not user_id:
             return
@@ -148,7 +156,9 @@ async def check_seller(seller):
             resp = await client.get(f"https://www.vinted.pl/api/v2/catalog/items",
                 params={"user_id": user_id, "per_page": "96", "order": "newest_first"},
                 headers=headers)
+            print(f"[SELLER] Items fetch: {resp.status_code} for user_id={user_id}")
             if resp.status_code != 200:
+                print(f"[SELLER] Failed: {resp.text[:100]}")
                 return
             items = resp.json().get("items", [])
             current_count = len(items)
