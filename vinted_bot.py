@@ -5,24 +5,36 @@ from urllib.parse import urlparse, parse_qs
 
 PANEL_URL = "http://169.58.23.67:8080"
 BOT_TOKEN = "8970159364:AAH4VH26Y3_WfJwTQZOPjGF_3flA-Pnrk7g"
-CHECK_INTERVAL = 300
+CHECK_INTERVAL = 120
 
 USER_CHAT_ID = None
+
+_http_client = None
+
+def get_http_client():
+    global _http_client
+    if _http_client is None:
+        _http_client = httpx.AsyncClient(follow_redirects=True, timeout=15)
+    return _http_client
 
 async def send_telegram(text):
     global USER_CHAT_ID
     if not USER_CHAT_ID: return
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    async with httpx.AsyncClient() as client:
-        await client.post(url, json={"chat_id": USER_CHAT_ID, "text": text, "parse_mode": "HTML", "disable_web_page_preview": True})
+    try:
+        await get_http_client().post(url, json={"chat_id": USER_CHAT_ID, "text": text, "parse_mode": "HTML", "disable_web_page_preview": True})
+    except Exception as e:
+        print(f"Telegram error: {e}")
 
 async def get_updates(offset=None):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates"
     params = {"timeout": 30}
     if offset: params["offset"] = offset
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(url, params=params, timeout=35)
+    try:
+        resp = await get_http_client().get(url, params=params, timeout=35)
         return resp.json().get("result", [])
+    except:
+        return []
 
 async def scrape_vinted(query_url):
     parsed = urlparse(query_url)
@@ -62,9 +74,11 @@ async def send_to_panel(items):
         return resp.json()
 
 async def get_queries():
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"{PANEL_URL}/api/bot/queries", timeout=10)
+    try:
+        resp = await get_http_client().get(f"{PANEL_URL}/api/bot/queries", timeout=10)
         return resp.json().get("queries", [])
+    except:
+        return []
 
 async def handle_login(email, password):
     try:
@@ -87,18 +101,16 @@ async def handle_login(email, password):
 
 async def get_brand_averages():
     try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(f"{PANEL_URL}/api/brand-averages", timeout=10)
-            return resp.json()
+        resp = await get_http_client().get(f"{PANEL_URL}/api/brand-averages", timeout=10)
+        return resp.json()
     except:
         return {}
 
 
 async def get_watched_sellers():
     try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(f"{PANEL_URL}/api/bot/sellers", timeout=10)
-            return resp.json().get("sellers", [])
+        resp = await get_http_client().get(f"{PANEL_URL}/api/bot/sellers", timeout=10)
+        return resp.json().get("sellers", [])
     except:
         return []
 
@@ -142,8 +154,7 @@ async def check_seller(seller):
             current_count = len(items)
             
             # Get previously tracked items
-            async with httpx.AsyncClient() as pc:
-                old_resp = await pc.get(f"{PANEL_URL}/api/bot/seller-items/{seller_id}", timeout=10)
+            old_resp = await get_http_client().get(f"{PANEL_URL}/api/bot/seller-items/{seller_id}", timeout=10)
                 old_items = {i["vinted_id"]: i["price"] for i in old_resp.json().get("items", [])}
             
             current_ids = set()
@@ -158,8 +169,8 @@ async def check_seller(seller):
                 brand = item.get("brand_title")
                 
                 # Update item in panel
-                async with httpx.AsyncClient() as pc:
-                    await pc.post(f"{PANEL_URL}/api/bot/seller-items/update", json={
+                try:
+                    await get_http_client().post(f"{PANEL_URL}/api/bot/seller-items/update", json={
                         "vinted_id": vid, "seller_id": seller_id,
                         "title": item.get("title", ""), "price": price,
                         "photo_url": photo_url, "url": f"https://www.vinted.pl/items/{vid}",
@@ -195,21 +206,22 @@ async def check_seller(seller):
             # Check for sold items (were tracked but no longer in current list)
             for old_vid in old_items:
                 if old_vid not in current_ids:
-                    # Mark as sold in panel
-                    async with httpx.AsyncClient() as pc:
-                        await pc.post(f"{PANEL_URL}/api/bot/seller-items/update", json={
+                    try:
+                        await get_http_client().post(f"{PANEL_URL}/api/bot/seller-items/update", json={
                             "vinted_id": old_vid, "seller_id": seller_id,
                             "title": "", "price": old_items[old_vid],
                             "is_available": False
                         })
+                    except:
+                        pass
                     msg = f"✅ <b>Sprzedano!</b> {username}\n"
                     msg += f"📦 Przedmiot został sprzedany\n"
                     msg += f"💰 Ostatnia cena: {old_items[old_vid]} zł"
                     await send_telegram(msg)
             
             # Update seller count
-            async with httpx.AsyncClient() as pc:
-                await pc.post(f"{PANEL_URL}/api/bot/sellers/update", 
+            try:
+                await get_http_client().post(f"{PANEL_URL}/api/bot/sellers/update", 
                     json={"seller_id": seller_id, "item_count": current_count})
     
     except Exception as e:
@@ -270,9 +282,10 @@ async def scraper_loop():
                                     msg += f"🔗 {i.get('url','')}"
                                 await send_telegram(msg)
                                 await asyncio.sleep(1)
-                        await asyncio.sleep(2)
+                        await asyncio.sleep(3)
                     except Exception as e:
                         print(f"Error scraping {q['name']}: {e}")
+                        await asyncio.sleep(5)
 
             # Check watched sellers
             sellers = await get_watched_sellers()

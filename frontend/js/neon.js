@@ -492,6 +492,7 @@ async function showSellerDetail(sellerId, username) {
     document.getElementById('seller-modal-title').textContent = '👤 ' + username;
     document.getElementById('seller-modal').classList.add('active');
     document.getElementById('seller-modal-items').innerHTML = '<div class="empty">Ładowanie przedmiotów...</div>';
+    document.getElementById('seller-modal-stats').innerHTML = '';
     
     try {
         var res = await fetch(API + '/api/sellers/' + sellerId + '/items');
@@ -499,46 +500,57 @@ async function showSellerDetail(sellerId, username) {
         var items = data.items || [];
         var total = data.total || 0;
         
-        // Stats
-        var prices = items.map(function(i) { return i.price; }).filter(function(p) { return p > 0; });
+        // Stats - only from available items
+        var available = items.filter(function(i) { return i.is_available !== false; });
+        var prices = available.map(function(i) { return i.price; }).filter(function(p) { return p > 0; });
         var avg = prices.length ? (prices.reduce(function(a,b){return a+b},0) / prices.length).toFixed(2) : 0;
-        var min = prices.length ? Math.min.apply(null, prices) : 0;
-        var max = prices.length ? Math.max.apply(null, prices) : 0;
+        var minP = prices.length ? Math.min.apply(null, prices) : 0;
+        var maxP = prices.length ? Math.max.apply(null, prices) : 0;
+        var sold = items.length - available.length;
         
         var brands = {};
-        items.forEach(function(i) {
+        available.forEach(function(i) {
             if (i.brand) brands[i.brand] = (brands[i.brand] || 0) + 1;
         });
         var topBrand = Object.keys(brands).sort(function(a,b){return brands[b]-brands[a]})[0] || '—';
         
         document.getElementById('seller-modal-stats').innerHTML = 
-            '<div class="stat-card"><div class="label">Przedmioty</div><div class="value accent">' + total + '</div></div>' +
+            '<div class="stat-card"><div class="label">Aktywne</div><div class="value accent">' + total + '</div></div>' +
+            '<div class="stat-card"><div class="label">Sprzedane</div><div class="value" style="color:#ef4444">' + sold + '</div></div>' +
             '<div class="stat-card"><div class="label">Śr. cena</div><div class="value green">' + avg + ' zł</div></div>' +
-            '<div class="stat-card"><div class="label">Min</div><div class="value yellow">' + min + ' zł</div></div>' +
-            '<div class="stat-card"><div class="label">Max</div><div class="value">' + max + ' zł</div></div>' +
-            '<div class="stat-card"><div class="label">Top marka</div><div class="value accent">' + topBrand + '</div></div>' +
-            '<div class="stat-card"><div class="label">Brands</div><div class="value">' + Object.keys(brands).length + '</div></div>';
+            '<div class="stat-card"><div class="label">Min</div><div class="value yellow">' + minP + ' zł</div></div>' +
+            '<div class="stat-card"><div class="label">Max</div><div class="value">' + maxP + ' zł</div></div>' +
+            '<div class="stat-card"><div class="label">Top marka</div><div class="value accent">' + topBrand + '</div></div>';
         
         // Items
         if (!items.length) {
-            document.getElementById('seller-modal-items').innerHTML = '<div class="empty">Brak przedmiotów lub API nie zwróciło danych</div>';
+            document.getElementById('seller-modal-items').innerHTML = '<div class="empty">Brak danych — bot dopiero zbiera informacje o tym sprzedawcy. Sprawdź ponownie za kilka minut.</div>';
             return;
         }
         
         document.getElementById('seller-modal-items').innerHTML = items.map(function(item) {
             var tags = '';
             if (item.brand) tags += '<span class="tag">' + item.brand + '</span>';
-            if (item.size) tags += '<span class="tag">' + item.size + '</span>';
-            if (item.condition) tags += '<span class="tag">' + item.condition + '</span>';
+            if (item.is_available === false) tags += '<span class="tag" style="background:rgba(239,68,68,0.15);color:#ef4444">SPRZEDANE</span>';
             
             var img = item.photo ? '<img class="item-img" src="' + item.photo + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
-            var date = item.created_at ? new Date(item.created_at * 1000).toLocaleDateString('pl-PL') : '';
             
-            return '<div class="item-card">' + img +
-                '<div class="item-top"><span class="item-title">' + item.title + '</span><span class="item-price">' + item.price + ' ' + item.currency + '</span></div>' +
+            var priceHtml = '<span class="item-price">' + item.price + ' zł</span>';
+            if (item.previous_price && item.previous_price !== item.price && item.previous_price > 0) {
+                var diff = item.previous_price - item.price;
+                var color = diff > 0 ? '#22c55e' : '#ef4444';
+                var arrow = diff > 0 ? '📉' : '📈';
+                priceHtml += '<div style="font-size:11px;color:' + color + ';margin-top:2px">' + arrow + 'Było: ' + item.previous_price + ' zł</div>';
+            }
+            
+            var url = item.url || ('https://www.vinted.pl/items/' + item.vinted_id);
+            var dateStr = item.first_seen ? new Date(item.first_seen).toLocaleDateString('pl-PL') : '';
+            
+            return '<div class="item-card" style="' + (item.is_available === false ? 'opacity:0.5' : '') + '">' + img +
+                '<div class="item-top"><span class="item-title">' + (item.title || 'Brak tytułu') + '</span>' + priceHtml + '</div>' +
                 '<div class="item-meta">' + tags + '</div>' +
-                (date ? '<div style="font-size:11px;color:var(--t3);margin-top:6px">📅 ' + date + '</div>' : '') +
-                '<a class="item-link" href="' + item.url + '" target="_blank">🔗 Zobacz na Vinted →</a>' +
+                (dateStr ? '<div style="font-size:11px;color:var(--t3);margin-top:6px">📅 ' + dateStr + '</div>' : '') +
+                '<a class="item-link" href="' + url + '" target="_blank">🔗 Zobacz na Vinted →</a>' +
                 '</div>';
         }).join('');
         

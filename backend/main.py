@@ -36,14 +36,32 @@ async def index():
 
 @app.get("/api/stats")
 async def get_stats(db: AsyncSession = Depends(get_db)):
-    total = (await db.execute(select(func.count(Item.id)))).scalar() or 0
-    avg_price = (await db.execute(select(func.avg(Item.price)))).scalar() or 0
-    min_price = (await db.execute(select(func.min(Item.price)))).scalar() or 0
-    max_price = (await db.execute(select(func.max(Item.price)))).scalar() or 0
-    queries_count = (await db.execute(select(func.count(SearchQuery.id)))).scalar() or 0
-    active_queries = (await db.execute(
-        select(func.count(SearchQuery.id)).where(SearchQuery.is_active == True)
-    )).scalar() or 0
+    from sqlalchemy import text as sa_text
+    
+    # Single query for item stats
+    row = (await db.execute(
+        select(
+            func.count(Item.id).label("total"),
+            func.avg(Item.price).label("avg"),
+            func.min(Item.price).label("min"),
+            func.max(Item.price).label("max"),
+        )
+    )).one()
+    
+    total = row.total or 0
+    avg_price = round(row.avg or 0, 2)
+    min_price = round(row.min or 0, 2)
+    max_price = round(row.max or 0, 2)
+    
+    # Query stats
+    qrow = (await db.execute(
+        select(
+            func.count(SearchQuery.id),
+            func.count(SearchQuery.id).filter(SearchQuery.is_active == True),
+        )
+    )).one()
+    
+    # Top brands
     brands = (await db.execute(
         select(Item.brand, func.count(Item.id).label("cnt"))
         .where(Item.brand.isnot(None))
@@ -54,11 +72,11 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
 
     return {
         "total_items": total,
-        "avg_price": round(avg_price, 2),
-        "min_price": round(min_price, 2),
-        "max_price": round(max_price, 2),
-        "total_queries": queries_count,
-        "active_queries": active_queries,
+        "avg_price": avg_price,
+        "min_price": min_price,
+        "max_price": max_price,
+        "total_queries": qrow[0] or 0,
+        "active_queries": qrow[1] or 0,
         "top_brands": [{"brand": b[0], "count": b[1]} for b in brands],
     }
 
@@ -599,7 +617,7 @@ async def get_seller_items(seller_id: int, db: AsyncSession = Depends(get_db)):
     items_result = await db.execute(
         select(SellerItem)
         .where(SellerItem.seller_id == seller_id)
-        .order_by(SellerItem.last_checked.desc())
+        .order_by(SellerItem.is_available.desc(), SellerItem.last_checked.desc())
     )
     items = items_result.scalars().all()
     
@@ -609,12 +627,12 @@ async def get_seller_items(seller_id: int, db: AsyncSession = Depends(get_db)):
             {
                 "id": i.id,
                 "vinted_id": i.vinted_id,
-                "title": i.title,
+                "title": i.title or "Sprzedane",
                 "price": i.price,
                 "previous_price": i.previous_price,
                 "brand": i.brand,
                 "photo": i.photo_url,
-                "url": i.url,
+                "url": i.url or f"https://www.vinted.pl/items/{i.vinted_id}",
                 "is_available": i.is_available,
                 "first_seen": i.first_seen.isoformat() if i.first_seen else None,
                 "last_checked": i.last_checked.isoformat() if i.last_checked else None,
@@ -678,8 +696,13 @@ async def bot_update_seller_item(data: dict, db: AsyncSession = Depends(get_db))
     item = result.scalar_one_or_none()
     
     if item:
-        item.previous_price = item.price if item.price != price else item.previous_price
-        item.price = price
+        item.previous_price = item.price if item.price != price and price > 0 else item.previous_price
+        if price > 0:
+            item.price = price
+        if title:
+            item.title = title
+        if photo_url:
+            item.photo_url = photo_url
         item.is_available = is_available
         item.last_checked = datetime.utcnow()
     else:
