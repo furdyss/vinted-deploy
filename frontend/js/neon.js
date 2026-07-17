@@ -443,10 +443,10 @@ async function loadSellers() {
             return;
         }
         el.innerHTML = data.sellers.map(function(s) {
-            return '<div class="card" style="display:flex;justify-content:space-between;align-items:center">' +
-                '<div><div style="font-weight:600">' + s.username + '</div>' +
-                '<div style="font-size:12px;color:var(--t3);margin-top:4px">Ostatnio: ' + s.last_item_count + ' ogłoszeń</div></div>' +
-                '<div style="display:flex;gap:8px;align-items:center">' +
+            return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="showSellerDetail(' + s.id + ', \'' + s.username + '\')">' +
+                '<div><div style="font-weight:600;color:var(--accent)">' + s.username + '</div>' +
+                '<div style="font-size:12px;color:var(--t3);margin-top:4px">' + s.last_item_count + ' ogłoszeń</div></div>' +
+                '<div style="display:flex;gap:8px;align-items:center" onclick="event.stopPropagation()">' +
                 '<span class="toggle ' + (s.is_active ? 'on' : 'off') + '" onclick="toggleSeller(' + s.id + ')">' + (s.is_active ? '🟢' : '⚫') + '</span>' +
                 '<span class="btn-icon" onclick="deleteSeller(' + s.id + ')" style="color:var(--err)">🗑️</span>' +
                 '</div></div>';
@@ -482,4 +482,67 @@ async function deleteSeller(id) {
     await fetch(API + '/api/sellers/' + id, { method: 'DELETE' });
     showToast('Usunięto');
     loadSellers();
+}
+
+
+// --- Seller Detail ---
+function closeSellerModal() { document.getElementById('seller-modal').classList.remove('active'); }
+
+async function showSellerDetail(sellerId, username) {
+    document.getElementById('seller-modal-title').textContent = '👤 ' + username;
+    document.getElementById('seller-modal').classList.add('active');
+    document.getElementById('seller-modal-items').innerHTML = '<div class="empty">Ładowanie przedmiotów...</div>';
+    
+    try {
+        var res = await fetch(API + '/api/sellers/' + sellerId + '/items');
+        var data = await res.json();
+        var items = data.items || [];
+        var total = data.total || 0;
+        
+        // Stats
+        var prices = items.map(function(i) { return i.price; }).filter(function(p) { return p > 0; });
+        var avg = prices.length ? (prices.reduce(function(a,b){return a+b},0) / prices.length).toFixed(2) : 0;
+        var min = prices.length ? Math.min.apply(null, prices) : 0;
+        var max = prices.length ? Math.max.apply(null, prices) : 0;
+        
+        var brands = {};
+        items.forEach(function(i) {
+            if (i.brand) brands[i.brand] = (brands[i.brand] || 0) + 1;
+        });
+        var topBrand = Object.keys(brands).sort(function(a,b){return brands[b]-brands[a]})[0] || '—';
+        
+        document.getElementById('seller-modal-stats').innerHTML = 
+            '<div class="stat-card"><div class="label">Przedmioty</div><div class="value accent">' + total + '</div></div>' +
+            '<div class="stat-card"><div class="label">Śr. cena</div><div class="value green">' + avg + ' zł</div></div>' +
+            '<div class="stat-card"><div class="label">Min</div><div class="value yellow">' + min + ' zł</div></div>' +
+            '<div class="stat-card"><div class="label">Max</div><div class="value">' + max + ' zł</div></div>' +
+            '<div class="stat-card"><div class="label">Top marka</div><div class="value accent">' + topBrand + '</div></div>' +
+            '<div class="stat-card"><div class="label">Brands</div><div class="value">' + Object.keys(brands).length + '</div></div>';
+        
+        // Items
+        if (!items.length) {
+            document.getElementById('seller-modal-items').innerHTML = '<div class="empty">Brak przedmiotów lub API nie zwróciło danych</div>';
+            return;
+        }
+        
+        document.getElementById('seller-modal-items').innerHTML = items.map(function(item) {
+            var tags = '';
+            if (item.brand) tags += '<span class="tag">' + item.brand + '</span>';
+            if (item.size) tags += '<span class="tag">' + item.size + '</span>';
+            if (item.condition) tags += '<span class="tag">' + item.condition + '</span>';
+            
+            var img = item.photo ? '<img class="item-img" src="' + item.photo + '" loading="lazy" onerror="this.style.display=\'none\'">' : '';
+            var date = item.created_at ? new Date(item.created_at * 1000).toLocaleDateString('pl-PL') : '';
+            
+            return '<div class="item-card">' + img +
+                '<div class="item-top"><span class="item-title">' + item.title + '</span><span class="item-price">' + item.price + ' ' + item.currency + '</span></div>' +
+                '<div class="item-meta">' + tags + '</div>' +
+                (date ? '<div style="font-size:11px;color:var(--t3);margin-top:6px">📅 ' + date + '</div>' : '') +
+                '<a class="item-link" href="' + item.url + '" target="_blank">🔗 Zobacz na Vinted →</a>' +
+                '</div>';
+        }).join('');
+        
+    } catch (e) {
+        document.getElementById('seller-modal-items').innerHTML = '<div class="empty">Błąd ładowania danych</div>';
+    }
 }

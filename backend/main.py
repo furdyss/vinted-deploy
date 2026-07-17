@@ -587,6 +587,71 @@ async def set_competitor_price(
     await db.commit()
     return {"status": "ok", "competitor_price": competitor_price}
 
+
+@app.get("/api/sellers/{seller_id}/items")
+async def get_seller_items(seller_id: int, db: AsyncSession = Depends(get_db)):
+    """Fetch seller's items from Vinted and return with details"""
+    from sqlalchemy import text
+    result = await db.execute(select(WatchedSeller).where(WatchedSeller.id == seller_id))
+    seller = result.scalar_one_or_none()
+    if not seller:
+        raise HTTPException(status_code=404)
+    
+    items = []
+    try:
+        import httpx
+        user_id = seller.user_id
+        
+        # If no user_id, try to get it
+        if not user_id:
+            async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+                resp = await client.get(f"https://www.vinted.pl/api/v2/users/{seller.username}",
+                    headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15", "Accept": "application/json"})
+                if resp.status_code == 200:
+                    data = resp.json().get("user", {})
+                    user_id = str(data.get("id", ""))
+                    seller.user_id = user_id
+                    await db.commit()
+        
+        if user_id:
+            async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+                resp = await client.get(f"https://www.vinted.pl/api/v2/catalog/items",
+                    params={"user_id": user_id, "per_page": "96", "order": "newest_first"},
+                    headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15", "Accept": "application/json", "Referer": "https://www.vinted.pl"})
+                
+                if resp.status_code == 200:
+                    raw_items = resp.json().get("items", [])
+                    for item in raw_items:
+                        price_obj = item.get("price", {})
+                        price = price_obj.get("amount", 0) if isinstance(price_obj, dict) else 0
+                        currency = price_obj.get("currency_code", "PLN") if isinstance(price_obj, dict) else "PLN"
+                        
+                        user_obj = item.get("user", {})
+                        photo = item.get("photo", {})
+                        photo_url = photo.get("url") or photo.get("full_size_url") if isinstance(photo, dict) else None
+                        
+                        items.append({
+                            "id": item.get("id"),
+                            "title": item.get("title", ""),
+                            "price": price,
+                            "currency": currency,
+                            "brand": item.get("brand_title"),
+                            "size": item.get("size_title"),
+                            "color": item.get("color"),
+                            "condition": item.get("status"),
+                            "url": f"https://www.vinted.pl/items/{item.get('id')}",
+                            "photo": photo_url,
+                            "created_at": item.get("created_at_ts"),
+                        })
+    except Exception as e:
+        print(f"Error fetching seller items: {e}")
+    
+    return {
+        "seller": {"id": seller.id, "username": seller.username, "user_id": seller.user_id},
+        "items": items,
+        "total": len(items),
+    }
+
 # ==================== BOT API ====================
 
 @app.post("/api/bot/import")
