@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, and_
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from backend.database import init_db, get_db, Item, SearchQuery, PriceHistory, WatchedSeller
+from backend.database import init_db, get_db, Item, SearchQuery, PriceHistory, WatchedSeller, SellerItem
 
 scheduler = AsyncIOScheduler()
 
@@ -651,6 +651,75 @@ async def get_seller_items(seller_id: int, db: AsyncSession = Depends(get_db)):
         "items": items,
         "total": len(items),
     }
+
+
+@app.get("/api/sellers/{seller_id}/price-history")
+async def get_seller_price_history(seller_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(SellerItem)
+        .where(SellerItem.seller_id == seller_id)
+        .where(SellerItem.is_available == True)
+        .order_by(SellerItem.last_checked.desc())
+    )
+    items = result.scalars().all()
+    return {
+        "items": [
+            {
+                "vinted_id": i.vinted_id,
+                "title": i.title,
+                "price": i.price,
+                "previous_price": i.previous_price,
+                "photo_url": i.photo_url,
+                "url": i.url,
+                "brand": i.brand,
+                "first_seen": i.first_seen.isoformat() if i.first_seen else None,
+                "last_checked": i.last_checked.isoformat() if i.last_checked else None,
+            }
+            for i in items
+        ]
+    }
+
+@app.get("/api/bot/seller-items/{seller_id}")
+async def bot_get_seller_items(seller_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(SellerItem)
+        .where(SellerItem.seller_id == seller_id)
+        .where(SellerItem.is_available == True)
+    )
+    items = result.scalars().all()
+    return {"items": [{"vinted_id": i.vinted_id, "price": i.price} for i in items]}
+
+@app.post("/api/bot/seller-items/update")
+async def bot_update_seller_item(data: dict, db: AsyncSession = Depends(get_db)):
+    vinted_id = str(data.get("vinted_id", ""))
+    seller_id = data.get("seller_id")
+    title = data.get("title", "")
+    price = float(data.get("price", 0))
+    photo_url = data.get("photo_url")
+    url = data.get("url", "")
+    brand = data.get("brand")
+    is_available = data.get("is_available", True)
+    
+    result = await db.execute(
+        select(SellerItem).where(SellerItem.vinted_id == vinted_id).where(SellerItem.seller_id == seller_id)
+    )
+    item = result.scalar_one_or_none()
+    
+    if item:
+        item.previous_price = item.price if item.price != price else item.previous_price
+        item.price = price
+        item.is_available = is_available
+        item.last_checked = datetime.utcnow()
+    else:
+        item = SellerItem(
+            vinted_id=vinted_id, seller_id=seller_id, title=title,
+            price=price, photo_url=photo_url, url=url, brand=brand,
+            is_available=is_available
+        )
+        db.add(item)
+    
+    await db.commit()
+    return {"status": "ok"}
 
 # ==================== BOT API ====================
 

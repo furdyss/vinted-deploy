@@ -106,10 +106,10 @@ async def check_seller(seller):
     try:
         username = seller["username"]
         user_id = seller.get("user_id")
+        seller_id = seller["id"]
         last_count = seller.get("last_item_count", 0)
         
         if not user_id:
-            # Try to get user_id from profile
             try:
                 async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
                     resp = await client.get(f"https://www.vinted.pl/api/v2/users/{username}",
@@ -119,7 +119,7 @@ async def check_seller(seller):
                         user_id = str(data.get("id", ""))
                         async with httpx.AsyncClient() as pc:
                             await pc.post(f"{PANEL_URL}/api/bot/sellers/update",
-                                json={"seller_id": seller["id"], "user_id": user_id})
+                                json={"seller_id": seller_id, "user_id": user_id})
             except:
                 pass
         
@@ -131,6 +131,7 @@ async def check_seller(seller):
             "Accept": "application/json",
             "Accept-Language": "pl-PL,pl;q=0.9",
         }
+        
         async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
             resp = await client.get(f"https://www.vinted.pl/api/v2/catalog/items",
                 params={"user_id": user_id, "per_page": "96", "order": "newest_first"},
@@ -140,9 +141,50 @@ async def check_seller(seller):
             items = resp.json().get("items", [])
             current_count = len(items)
             
+            # Get previously tracked items
+            async with httpx.AsyncClient() as pc:
+                old_resp = await pc.get(f"{PANEL_URL}/api/bot/seller-items/{seller_id}", timeout=10)
+                old_items = {i["vinted_id"]: i["price"] for i in old_resp.json().get("items", [])}
+            
+            current_ids = set()
+            
+            for item in items:
+                vid = str(item.get("id", ""))
+                current_ids.add(vid)
+                price_obj = item.get("price", {})
+                price = price_obj.get("amount", 0) if isinstance(price_obj, dict) else 0
+                photo = item.get("photo", {})
+                photo_url = photo.get("url") if isinstance(photo, dict) else None
+                brand = item.get("brand_title")
+                
+                # Update item in panel
+                async with httpx.AsyncClient() as pc:
+                    await pc.post(f"{PANEL_URL}/api/bot/seller-items/update", json={
+                        "vinted_id": vid, "seller_id": seller_id,
+                        "title": item.get("title", ""), "price": price,
+                        "photo_url": photo_url, "url": f"https://www.vinted.pl/items/{vid}",
+                        "brand": brand, "is_available": True
+                    })
+                
+                # Check for price change
+                if vid in old_items and old_items[vid] != price and old_items[vid] > 0:
+                    old_price = old_items[vid]
+                    diff = round(old_price - price, 2)
+                    emoji = "📉" if price < old_price else "📈"
+                    msg = f"{emoji} <b>Zmiana ceny!</b> {username}\n"
+                    msg += f"📦 {item.get('title', '')}\n"
+                    msg += f"💰 {old_price} zł → <b>{price} zł</b>"
+                    if diff > 0:
+                        msg += f" (taniej o {diff} zł)"
+                    else:
+                        msg += f" (drożej o {abs(diff)} zł)"
+                    msg += f"\n🔗 https://www.vinted.pl/items/{vid}"
+                    await send_telegram(msg)
+            
+            # Check for new items
             if last_count > 0 and current_count > last_count:
-                new_items = current_count - last_count
-                msg = f"👤 <b>{username}</b> dodał {new_items} nowych ogłoszeń!\n\n"
+                new_count = current_count - last_count
+                msg = f"👤 <b>{username}</b> dodał {new_count} nowych ogłoszeń!\n\n"
                 for item in items[:5]:
                     price_obj = item.get("price", {})
                     price = price_obj.get("amount", 0) if isinstance(price_obj, dict) else 0
@@ -150,10 +192,26 @@ async def check_seller(seller):
                     msg += f"🔗 https://www.vinted.pl/items/{item.get('id', '')}\n\n"
                 await send_telegram(msg)
             
-            # Update count
-            async with httpx.AsyncClient() as client:
-                await client.post(f"{PANEL_URL}/api/bot/sellers/update", 
-                    json={"seller_id": seller["id"], "item_count": current_count})
+            # Check for sold items (were tracked but no longer in current list)
+            for old_vid in old_items:
+                if old_vid not in current_ids:
+                    # Mark as sold in panel
+                    async with httpx.AsyncClient() as pc:
+                        await pc.post(f"{PANEL_URL}/api/bot/seller-items/update", json={
+                            "vinted_id": old_vid, "seller_id": seller_id,
+                            "title": "", "price": old_items[old_vid],
+                            "is_available": False
+                        })
+                    msg = f"✅ <b>Sprzedano!</b> {username}\n"
+                    msg += f"📦 Przedmiot został sprzedany\n"
+                    msg += f"💰 Ostatnia cena: {old_items[old_vid]} zł"
+                    await send_telegram(msg)
+            
+            # Update seller count
+            async with httpx.AsyncClient() as pc:
+                await pc.post(f"{PANEL_URL}/api/bot/sellers/update", 
+                    json={"seller_id": seller_id, "item_count": current_count})
+    
     except Exception as e:
         print(f"Seller check error: {e}")
 

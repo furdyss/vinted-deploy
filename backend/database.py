@@ -75,6 +75,24 @@ class WatchedSeller(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+
+
+class SellerItem(Base):
+    __tablename__ = "seller_items"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    vinted_id = Column(String, index=True)
+    seller_id = Column(Integer, index=True)
+    title = Column(String)
+    price = Column(Float)
+    previous_price = Column(Float, nullable=True)
+    photo_url = Column(String, nullable=True)
+    url = Column(String)
+    brand = Column(String, nullable=True)
+    is_available = Column(Boolean, default=True)
+    first_seen = Column(DateTime, default=datetime.utcnow)
+    last_checked = Column(DateTime, default=datetime.utcnow)
+
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
