@@ -683,7 +683,7 @@ async def bot_get_seller_items(seller_id: int, db: AsyncSession = Depends(get_db
 @app.post("/api/bot/seller-items/update")
 async def bot_update_seller_item(data: dict, db: AsyncSession = Depends(get_db)):
     vinted_id = str(data.get("vinted_id", ""))
-    seller_id = data.get("seller_id")
+    seller_id = int(data.get("seller_id", 0))
     title = data.get("title", "")
     price = float(data.get("price", 0))
     photo_url = data.get("photo_url")
