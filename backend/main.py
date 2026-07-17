@@ -585,8 +585,8 @@ async def bot_update_seller(data: dict, db: AsyncSession = Depends(get_db)):
     s = result.scalar_one_or_none()
     if s:
         s.last_item_count = item_count
-        if user_id:
-            s.user_id = user_id
+        if user_id and user_id != "None":
+            s.user_id = str(user_id)
         await db.commit()
     return {"status": "ok"}
 
