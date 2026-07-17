@@ -105,14 +105,36 @@ async def get_watched_sellers():
 async def check_seller(seller):
     try:
         username = seller["username"]
+        user_id = seller.get("user_id")
         last_count = seller.get("last_item_count", 0)
+        
+        if not user_id:
+            # Try to get user_id from profile
+            try:
+                async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+                    resp = await client.get(f"https://www.vinted.pl/api/v2/users/{username}",
+                        headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
+                    if resp.status_code == 200:
+                        data = resp.json().get("user", {})
+                        user_id = str(data.get("id", ""))
+                        async with httpx.AsyncClient() as pc:
+                            await pc.post(f"{PANEL_URL}/api/bot/sellers/update",
+                                json={"seller_id": seller["id"], "user_id": user_id})
+            except:
+                pass
+        
+        if not user_id:
+            return
+        
         headers = {
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15",
             "Accept": "application/json",
             "Accept-Language": "pl-PL,pl;q=0.9",
         }
         async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
-            resp = await client.get(f"https://www.vinted.pl/api/v2/users/{username}/items", headers=headers)
+            resp = await client.get(f"https://www.vinted.pl/api/v2/catalog/items",
+                params={"user_id": user_id, "per_page": "96", "order": "newest_first"},
+                headers=headers)
             if resp.status_code != 200:
                 return
             items = resp.json().get("items", [])

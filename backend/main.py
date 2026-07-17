@@ -504,14 +504,31 @@ async def add_seller(
     )
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Sprzedawca już jest na liście")
+    
+    # Resolve user_id from Vinted API
+    user_id = None
+    item_count = 0
+    try:
+        import httpx
+        async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+            resp = await client.get(f"https://www.vinted.pl/api/v2/users/{username}",
+                headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
+            if resp.status_code == 200:
+                data = resp.json().get("user", {})
+                user_id = str(data.get("id", ""))
+                item_count = data.get("item_count", 0) or 0
+    except:
+        pass
+    
     s = WatchedSeller(
         username=username,
+        user_id=user_id,
         profile_url=f"https://www.vinted.pl/member/{username}",
-        last_item_count=0,
+        last_item_count=item_count,
     )
     db.add(s)
     await db.commit()
-    return {"status": "ok", "id": s.id}
+    return {"status": "ok", "id": s.id, "user_id": user_id, "item_count": item_count}
 
 @app.delete("/api/sellers/{seller_id}")
 async def delete_seller(seller_id: int, db: AsyncSession = Depends(get_db)):
@@ -539,7 +556,7 @@ async def bot_get_sellers(db: AsyncSession = Depends(get_db)):
         select(WatchedSeller).where(WatchedSeller.is_active == True)
     )
     sellers = result.scalars().all()
-    return {"sellers": [{"id": s.id, "username": s.username, "last_item_count": s.last_item_count} for s in sellers]}
+    return {"sellers": [{"id": s.id, "username": s.username, "user_id": s.user_id, "last_item_count": s.last_item_count} for s in sellers]}
 
 @app.post("/api/bot/sellers/update")
 async def bot_update_seller(data: dict, db: AsyncSession = Depends(get_db)):

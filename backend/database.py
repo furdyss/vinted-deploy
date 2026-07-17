@@ -69,6 +69,7 @@ class WatchedSeller(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String, unique=True, index=True)
+    user_id = Column(String, nullable=True)
     profile_url = Column(String, nullable=True)
     last_item_count = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
