@@ -155,7 +155,7 @@ async def check_seller(seller):
             
             # Get previously tracked items
             old_resp = await get_http_client().get(f"{PANEL_URL}/api/bot/seller-items/{seller_id}", timeout=10)
-                old_items = {i["vinted_id"]: i["price"] for i in old_resp.json().get("items", [])}
+            old_items = {i["vinted_id"]: i["price"] for i in old_resp.json().get("items", [])}
             
             current_ids = set()
             
