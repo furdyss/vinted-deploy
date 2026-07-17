@@ -503,6 +503,7 @@ async def get_sellers(db: AsyncSession = Depends(get_db)):
             {
                 "id": s.id,
                 "username": s.username,
+                "user_id": s.user_id,
                 "profile_url": s.profile_url,
                 "last_item_count": s.last_item_count,
                 "is_active": s.is_active,
